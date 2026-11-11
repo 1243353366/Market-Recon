@@ -1,3 +1,3 @@
-## Data-source adapters
+## Shared data-source adapter layer
 
-Added a source registry that marks each connector's actual implementation status, authentication, and caveats. FRED series observations and USAspending award search have starter clients; SEC filing ingestion remains limited. Alpha Vantage, FMP, ImportYeti, and Quiver are listed as planned/access-review sources, not claimed integrations. See [docs/data-sources.md](docs/data-sources.md).
+Added the exact adapter package layout, a normalized provenance-rich record schema, a common `SourceAdapter` protocol, and logical collections for SEC, FRED, USAspending, and Quiver. SEC/FRED/USAspending wrappers use the existing clients. Quiver is configurable from verified endpoint metadata rather than hard-coding undocumented API routes. See [docs/source-adapters.md](docs/source-adapters.md) and [market_recon/sources/README.md](market_recon/sources/README.md).
