@@ -60,7 +60,7 @@ def score_review_cases(cases: list[dict[str, Any]], predictions: dict[str, dict[
     detection_score = 20 * (2 * precision * recall / (precision + recall) if precision + recall else 0.0)
     false_positive_score = 20 * precision
     severity_score = 10 * severity_correct / severity_total if severity_total else 0.0
-    fix_score = 20 * fix_passed / fix_total if fix_total else 0.0
+    fix_score = 25 * fix_passed / fix_total if fix_total else 0.0
     regression_score = 25 * regression_passed / regression_total if regression_total else 0.0
     explanation_score = 5 * sum(explanations) / len(explanations) if explanations else 0.0
     # The published taxonomy weights detection 20, precision 20, remediation 25,

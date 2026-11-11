@@ -12,6 +12,7 @@ type RecordItem = {
   published_at?: string | null;
   entity_name?: string | null;
   ticker?: string | null;
+  license_status?: string | null;
   data: Record<string, unknown>;
   metadata: Record<string, unknown>;
 };
@@ -82,7 +83,7 @@ export default function App() {
       {selected && <div className="modal-backdrop" role="presentation" onClick={() => setSelected(null)}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="record-title" onClick={(event) => event.stopPropagation()}>
         <button className="close" onClick={() => setSelected(null)} aria-label="Close">×</button>
         <p className="eyebrow">{selected.source_id} / {selected.collection}</p><h2 id="record-title">{selected.entity_name || selected.record_type}</h2>
-        <dl><dt>Record ID</dt><dd>{selected.record_id}</dd><dt>Observed</dt><dd>{selected.observed_at || 'Not specified'}</dd><dt>Retrieved</dt><dd>{selected.retrieved_at}</dd><dt>License status</dt><dd>{String(selected.data.license_status ?? selected.metadata.license_status ?? 'Review source terms')}</dd></dl>
+        <dl><dt>Record ID</dt><dd>{selected.record_id}</dd><dt>Observed</dt><dd>{selected.observed_at || 'Not specified'}</dd><dt>Retrieved</dt><dd>{selected.retrieved_at}</dd><dt>License status</dt><dd>{selected.license_status ?? selected.data.license_status ?? selected.metadata.license_status ?? 'Review source terms'}</dd></dl>
         <p><a href={selected.source_url} target="_blank" rel="noreferrer">Open cited source ↗</a></p>
         <h3>Normalized data</h3><pre>{JSON.stringify(selected.data, null, 2)}</pre>
         <h3>Metadata</h3><pre>{JSON.stringify(selected.metadata, null, 2)}</pre>

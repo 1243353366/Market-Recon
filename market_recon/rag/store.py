@@ -4,10 +4,31 @@ import re
 from collections import defaultdict
 from typing import Any
 
+import uuid
+
 from qdrant_client import QdrantClient, models
 
 from .embeddings import Embedder
 from .models import DocumentChunk, SearchHit
+
+
+
+def _point_id(chunk_id: str) -> int | str:
+    """Validate a chunk ID as a Qdrant-acceptable point ID (unsigned 64-bit int or UUID)."""
+    try:
+        return uuid.UUID(chunk_id)
+    except (ValueError, AttributeError):
+        pass
+    try:
+        value = int(chunk_id)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"chunk_id {chunk_id!r} is not a Qdrant point ID; Qdrant accepts an unsigned "
+            "64-bit integer or a UUID, so use chunking.chunk_point_id()"
+        ) from exc
+    if value < 0 or value >= 2**64:
+        raise ValueError(f"chunk_id {chunk_id!r} is outside the unsigned 64-bit point ID range")
+    return value
 
 
 class QdrantKnowledgeBase:
@@ -37,7 +58,7 @@ class QdrantKnowledgeBase:
             vectors = self.embedder.embed_documents([item.text for item in batch])
             points = [
                 models.PointStruct(
-                    id=item.chunk_id,
+                    id=_point_id(item.chunk_id),
                     vector=vector,
                     payload={**item.metadata, "chunk_id": item.chunk_id, "document_id": item.document_id,
                               "chunk_index": item.chunk_index, "text": item.text},

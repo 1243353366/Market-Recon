@@ -39,7 +39,8 @@ def test_filing_workflow_fetches_parses_chunks_indexes_and_compares(tmp_path: Pa
     versions = FilingVersionStore(tmp_path / "filings.sqlite")
     workflow = SecFilingWorkflow(client, index, versions)
     first = workflow.ingest("TEST", "10-K", limit=1)
-    assert first.documents == first.sections == first.chunks_indexed == 1
+    assert first.documents == 1  # the fixture has two Item headings, so one filing yields two sections
+    assert first.sections == first.chunks_indexed == 2
     second = workflow.ingest("TEST", "10-K", limit=2)
     assert second.documents == 2
     assert second.chunks_indexed >= 2

@@ -100,3 +100,16 @@ Search results are returned as excerpts with source title, filing type, publicat
 5. Entity resolution and a provenance-preserving company/people/filing graph.
 6. Deterministic insider-cluster and 13F change analysis from normalized records.
 7. Optional provider adapters for hosted and local LLMs, with citations and structured output validation.
+
+## Point identifiers
+
+Qdrant accepts unsigned 64-bit integers or UUIDs as point IDs. `chunking.chunk_point_id()` derives a
+deterministic UUIDv5 from each chunk's content key (`document_id:index:text-prefix`), so re-ingesting the
+same document overwrites the same points instead of accumulating duplicates. The raw SHA-256 digest of the
+same key is retained as `payload["content_hash"]` for change detection, and `QdrantKnowledgeBase.upsert`
+rejects any ID that does not parse as a UUID before calling Qdrant.
+
+`QdrantKnowledgeBase` still does not verify that an existing collection was built with the configured
+embedding model. Writing to a collection with a different model but the same vector dimension will succeed
+and silently degrade retrieval; record the model and dimension in collection metadata and refuse mismatched
+writes before relying on retrieval quality.

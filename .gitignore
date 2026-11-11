@@ -1,3 +1,11 @@
 go/ingest-gateway/data/
 rust/signal-engine/target/
 rust/signal-engine/Cargo.lock
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+.venv/
+data/
+node_modules/
+dist/

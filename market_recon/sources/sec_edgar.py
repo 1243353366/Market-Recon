@@ -6,10 +6,10 @@ from market_recon.rag.sec_edgar import SecEdgarClient
 from .schema import NormalizedRecord, SourceAdapter, utc_now_iso
 
 SEC_COLLECTIONS = {
-    "filings": {"10-K", "10-Q", "8-K", "S-1", "DEF 14A", "SC 13D", "SC 13G"},
-    "insider": {"3", "4", "5"},
-    "institutional_holdings": {"13F-HR"},
-    "resale_notices": {"144"},
+    "sec_filings": {"10-K", "10-Q", "8-K", "S-1", "DEF 14A", "SC 13D", "SC 13G"},
+    "sec_insider": {"3", "4", "5"},
+    "sec_institutional_holdings": {"13F-HR"},
+    "sec_resale_notices": {"144"},
 }
 
 

@@ -26,7 +26,7 @@ class FREDAdapter:
         return [NormalizedRecord(
             record_id=row.record_id,
             source_id=self.source_id,
-            collection="macro_observations",
+            collection="fred_macro",
             record_type=row.record_type,
             source_name=row.source_name,
             source_url=row.source_url,

@@ -18,8 +18,8 @@ class FilingVersion:
     def __post_init__(self) -> None:
         if not self.cik.strip():
             raise ValueError("cik is required")
-        if self.form.upper() not in {"10-K", "10-Q", "10-K/A", "10-Q/A"}:
-            raise ValueError("Only 10-K/10-Q filings and amendments can be compared")
+        if self.form.upper() not in {"10-K", "10-Q", "10-K/A", "10-Q/A", "DEF 14A"}:
+            raise ValueError("Only 10-K/10-Q filings, their amendments, and DEF 14A proxies can be compared")
         if not self.source_url.startswith("https://"):
             raise ValueError("source_url must be HTTPS")
         if not self.filing_date.strip():

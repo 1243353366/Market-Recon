@@ -4,7 +4,8 @@ from datetime import datetime, timezone
 from hashlib import sha256
 
 import requests
-from bs4 import BeautifulSoup
+
+from market_recon.sources.sec_parser import html_to_text
 
 from .models import SourceDocument
 
@@ -56,10 +57,7 @@ class SecEdgarClient:
             if filing_response.status_code == 404:
                 continue
             filing_response.raise_for_status()
-            soup = BeautifulSoup(filing_response.content, "html.parser")
-            for node in soup(["script", "style", "ix:header"]):
-                node.decompose()
-            text = "\n".join(line.strip() for line in soup.get_text("\n").splitlines() if line.strip())
+            text = html_to_text(filing_response.content)
             if not text:
                 continue
             document_id = sha256(f"sec:{cik}:{accession}:{filename}".encode()).hexdigest()

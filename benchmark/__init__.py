@@ -1,3 +1,6 @@
-# Benchmark
+"""Adversarial code-review benchmark.
 
-The repository has a starter adversarial code-review benchmark in `benchmark/`. It deliberately includes known-good code and checks false positives, fix correctness, and regressions rather than rewarding review-comment volume. See [benchmark/README.md](benchmark/README.md).
+The benchmark deliberately includes known-good cases so scoring penalises false
+positives and rewards fix correctness and regression freedom, not review volume.
+See benchmark/README.md for the case format.
+"""

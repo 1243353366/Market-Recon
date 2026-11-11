@@ -18,7 +18,7 @@ class USAspendingAdapter:
         return [NormalizedRecord(
             record_id=row.record_id,
             source_id=self.source_id,
-            collection="federal_awards",
+            collection="usaspending_awards",
             record_type=row.record_type,
             source_name=row.source_name,
             source_url=row.source_url,
