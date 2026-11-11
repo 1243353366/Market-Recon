@@ -1,0 +1,39 @@
+{
+  "sources": {
+    "sec_edgar": {
+      "enabled": false,
+      "user_agent_env": "SEC_USER_AGENT",
+      "timeout": 30
+    },
+    "fred": {
+      "enabled": false,
+      "api_key_env": "FRED_API_KEY",
+      "timeout": 20
+    },
+    "usaspending": {
+      "enabled": false,
+      "timeout": 30
+    },
+    "quiver_quant": {
+      "enabled": false,
+      "api_key_env": "QUIVER_API_KEY",
+      "endpoint_url": "",
+      "auth_header": "Authorization",
+      "auth_prefix": "",
+      "results_key": "data",
+      "id_field": "id",
+      "source_url_field": "url",
+      "record_type": "quiver_record",
+      "collection": "alternative_data",
+      "timeout": 20
+    },
+    "yahoo_finance": {
+      "enabled": false,
+      "timeout": 30
+    },
+    "stooq": {
+      "enabled": false,
+      "timeout": 30
+    }
+  }
+}
