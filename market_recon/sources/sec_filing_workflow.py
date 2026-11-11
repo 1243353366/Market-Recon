@@ -130,29 +130,34 @@ class SecFilingWorkflow:
         return IngestResult(len(documents), section_count, chunks_indexed, tuple(sorted(set(dates))))
 
     def compare_latest(self, ticker: str, form: str = "10-K") -> dict[str, object]:
-        pair = self.versions.latest_pair(ticker, form)
-        if pair is None:
-            raise LookupError(f"Need at least two indexed {form.upper()} filings for {ticker.upper()} to compare")
-        before, after = pair
-        grouped = summarize_filing_changes(before, after)
-        result: dict[str, object] = {
-            "ticker": ticker.upper(),
-            "form": form.upper(),
-            "before": {"filing_date": before.filing_date, "source_url": before.source_url},
-            "after": {"filing_date": after.filing_date, "source_url": after.source_url},
-            "method": "deterministic section text diff and transparent keyword/section heuristics",
-            "limitations": "Candidate changes only; verify both filings. Absence from parsed text does not prove a risk or event ended.",
-            "changes": {},
-        }
-        serialized: dict[str, list[dict[str, object]]] = {}
-        for category, findings in grouped.items():
-            serialized[category] = []
-            for finding in findings:
-                item = asdict(finding)
-                item["explanation"] = (
-                    f"This {finding.change} text was surfaced because a changed line matched the "
-                    f"documented {category.replace('_', ' ')} keyword/section heuristic. It is not a verified conclusion."
-                )
-                serialized[category].append(item)
-        result["changes"] = serialized
-        return result
+        return compare_latest_filings(self.versions, ticker, form)
+
+
+def compare_latest_filings(versions: FilingVersionStore, ticker: str, form: str = "10-K") -> dict[str, object]:
+    """Compare archived filings without initializing an embedding or vector-store client."""
+    pair = versions.latest_pair(ticker, form)
+    if pair is None:
+        raise LookupError(f"Need at least two indexed {form.upper()} filings for {ticker.upper()} to compare")
+    before, after = pair
+    grouped = summarize_filing_changes(before, after)
+    result: dict[str, object] = {
+        "ticker": ticker.upper(),
+        "form": form.upper(),
+        "before": {"filing_date": before.filing_date, "source_url": before.source_url},
+        "after": {"filing_date": after.filing_date, "source_url": after.source_url},
+        "method": "deterministic section text diff and transparent keyword/section heuristics",
+        "limitations": "Candidate changes only; verify both filings. Absence from parsed text does not prove a risk or event ended.",
+        "changes": {},
+    }
+    serialized: dict[str, list[dict[str, object]]] = {}
+    for category, findings in grouped.items():
+        serialized[category] = []
+        for finding in findings:
+            item = asdict(finding)
+            item["explanation"] = (
+                f"This {finding.change} text was surfaced because a changed line matched the "
+                f"documented {category.replace('_', ' ')} keyword/section heuristic. It is not a verified conclusion."
+            )
+            serialized[category].append(item)
+    result["changes"] = serialized
+    return result

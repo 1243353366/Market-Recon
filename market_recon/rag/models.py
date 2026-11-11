@@ -6,7 +6,7 @@ from typing import Any
 
 @dataclass(frozen=True)
 class SourceDocument:
-    """A source document with traceable public provenance."""
+    """A source document with traceable provenance and collision-safe metadata."""
 
     document_id: str
     title: str
@@ -22,9 +22,14 @@ class SourceDocument:
 
     def to_payload(self) -> dict[str, Any]:
         payload = asdict(self)
+        metadata = payload.pop("metadata")
         payload.pop("text")
-        payload.pop("metadata")
-        payload.update(self.metadata)
+        protected = set(payload)
+        collisions = protected.intersection(metadata)
+        if collisions:
+            names = ", ".join(sorted(collisions))
+            raise ValueError(f"metadata cannot overwrite canonical provenance fields: {names}")
+        payload.update(metadata)
         return payload
 
 

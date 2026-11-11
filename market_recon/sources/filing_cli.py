@@ -3,11 +3,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from pathlib import Path
 
 from market_recon.rag.pipeline import create_store
 from market_recon.rag.sec_edgar import SecEdgarClient
-from market_recon.sources.sec_filing_workflow import FilingVersionStore, SecFilingWorkflow
+from market_recon.sources.sec_filing_workflow import FilingVersionStore, SecFilingWorkflow, compare_latest_filings
 
 
 def main() -> None:
@@ -22,10 +21,11 @@ def main() -> None:
     compare.add_argument("--form", choices=("10-K", "10-Q"), default="10-K")
     for command in (ingest, compare):
         command.add_argument("--database", default=os.getenv("MARKET_RECON_DB", "data/market.db"))
-        command.add_argument("--model", default=os.getenv("MARKET_RECON_EMBEDDING_MODEL", "BAAI/bge-m3"))
-        command.add_argument("--qdrant-path", default=os.getenv("QDRANT_PATH", "data/qdrant"))
-        command.add_argument("--qdrant-url", default=os.getenv("QDRANT_URL"))
-        command.add_argument("--qdrant-api-key", default=os.getenv("QDRANT_API_KEY"))
+    ingest.add_argument("--model", default=os.getenv("MARKET_RECON_EMBEDDING_MODEL", "BAAI/bge-m3"))
+    ingest.add_argument("--qdrant-path", default=os.getenv("QDRANT_PATH", "data/qdrant"))
+    ingest.add_argument("--qdrant-url", default=os.getenv("QDRANT_URL"))
+    ingest.add_argument("--qdrant-api-key", default=os.getenv("QDRANT_API_KEY"))
+
     args = parser.parse_args()
     if args.command == "ingest" and args.limit < 1:
         parser.error("--limit must be positive")
@@ -39,7 +39,8 @@ def main() -> None:
         workflow = SecFilingWorkflow(SecEdgarClient(user_agent), index, versions)
         print(json.dumps(workflow.ingest(args.ticker, args.form, args.limit).__dict__, indent=2))
     else:
-        print(json.dumps(SecFilingWorkflow.__new__(SecFilingWorkflow).compare_latest(args.ticker, args.form), indent=2))
+        # Comparison only needs SQLite; avoid loading large embedding models or Qdrant.
+        print(json.dumps(compare_latest_filings(versions, args.ticker, args.form), indent=2))
 
 
 if __name__ == "__main__":
