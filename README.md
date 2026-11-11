@@ -1,7 +1,5 @@
-# Market Recon RAG
+## Educational Investing Coach
 
-The RAG starter indexes public SEC filings and normalized JSONL documents in Qdrant and returns semantic/lexical search results with source URLs and metadata.
+Market Recon now includes an early, bounded educational coach under the Streamlit multipage navigation. It teaches general investing concepts and supports reflection on habits and financial readiness. It does not select securities, prescribe allocations, provide personalized investment/tax/legal advice, or execute trades.
 
-Install and usage instructions: [RAG architecture and quick start](docs/rag-architecture.md).
-
-This implementation is an early prototype. It is not a comprehensive data collector, doesn't cover all source families, and doesn't produce investment advice or reliably perform numeric screens from prose. Use structured data for quantitative filters and verify conclusions against original sources.
+See [docs/investing-coach.md](docs/investing-coach.md). Do not provide sensitive account or identity information.
