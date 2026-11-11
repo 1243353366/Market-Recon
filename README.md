@@ -1,3 +1,3 @@
-## Expanded public-signal domains
+## Filing change review
 
-The signal model and source registry now cover engineering footprints, software package trends, vulnerability disclosures, technical presentations, academic-to-commercial research, standards activity, local permitting, regulatory dockets/comments, litigation, and governance changes. The accompanying guide defines measurement caveats and source independence rules. These entries are schema/catalog support; most listed connectors are not implemented. See [docs/public-signal-intelligence.md](docs/public-signal-intelligence.md).
+Added a heuristic, source-cited filing review layer to surface candidate new/removed risk language, executive changes, compensation changes, supply-chain changes, and litigation changes from parsed section diffs. It is deliberately an assistive review queue, not a semantic or materiality judgment. See [docs/filing-change-intelligence.md](docs/filing-change-intelligence.md).
