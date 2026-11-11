@@ -4,6 +4,26 @@
 
 ### Fixed
 
+- **FRED missing observations.** Normalize the provider's `"."` no-data sentinel to `None`, so it cannot masquerade as a numeric value.
+- **Normalized source records.** FRED and USAspending clients now emit the shared `sources.schema.NormalizedRecord` directly, preserving canonical source, collection, observed-date, license, and metadata fields without adapter translations.
+- **Screener handling of incomplete data.** Missing, null, nonnumeric, and NaN rule values no longer crash or accidentally qualify as zero; incomplete rows are excluded from numeric rules.
+- **Coach topic priority.** Risk language now takes precedence over incidental mentions of an account, so account-risk questions receive risk education rather than tax-account guidance.
+- **ATR input and smoothing.** Calculate ATR with Wilder smoothing and only when real High/Low/Close columns exist; close-only price data no longer produces a fabricated ATR.
+- **Project setup documentation.** Replaced the minimal README with quickstarts, supported workflows, prerequisites, boundaries, and testing guidance.
+
+### Added
+
+- Regression tests for FRED sentinel normalization, canonical records, incomplete screener values, risk routing, and ATR validation/smoothing.
+
+### Validation
+
+- Tested unchanged commit `5d7143f00b24d69460d04d073b5958a2cf35aa40` before editing: Python suite passed (55 tests) after installing the dependencies needed by the documented test workflow.
+- Confirmed on the unchanged commit: screener crashed on a `None` metric; FRED passed `"."` through as a value; risk-in-account wording routed to account/tax guidance; and close-only price data returned a numeric ATR.
+- After changes: `PYTHONPATH=. python -m pytest tests -q` passes (59 tests). Static concerns not reproduced as runtime failures remain open for later work.
+
+
+### Fixed
+
 - **Qdrant point IDs (blocking).** `chunking.chunk_document` derived a 64-character
   SHA-256 hex digest as `chunk_id` and `QdrantKnowledgeBase.upsert` passed it straight to
   `PointStruct.id`. Qdrant accepts unsigned integers or UUIDs, so every real upsert was

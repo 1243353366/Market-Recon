@@ -22,17 +22,4 @@ class FREDAdapter:
         limit: int = 1000,
         **_: Any,
     ) -> list[NormalizedRecord]:
-        rows = self.client.observations(series_id, start_date=start_date, end_date=end_date, limit=limit)
-        return [NormalizedRecord(
-            record_id=row.record_id,
-            source_id=self.source_id,
-            collection="fred_macro",
-            record_type=row.record_type,
-            source_name=row.source_name,
-            source_url=row.source_url,
-            retrieved_at=row.retrieved_at,
-            observed_at=row.observed_on,
-            data=row.data,
-            license_status="fred_api_terms_review_required",
-            metadata={"series_id": series_id},
-        ) for row in rows]
+        return self.client.observations(series_id, start_date=start_date, end_date=end_date, limit=limit)

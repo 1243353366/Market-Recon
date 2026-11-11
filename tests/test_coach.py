@@ -22,3 +22,7 @@ def test_specific_stock_request_does_not_name_a_security() -> None:
     reply = coach("Which stock should I buy?")
     assert reply.topic == "stock_picking"
     assert "will not tell you which stock to buy or sell" in reply.message
+
+
+def test_risk_question_wins_over_incidental_account_mention() -> None:
+    assert classify_topic("What's my risk in my account?") == "risk"

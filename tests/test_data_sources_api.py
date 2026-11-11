@@ -54,3 +54,17 @@ def test_usaspending_awards_are_normalized_and_cited():
 def test_usaspending_validates_bounds():
     with pytest.raises(ValueError):
         USASpendingClient(session=Mock()).search_awards(start_date=date(2026, 1, 2), end_date=date(2026, 1, 1))
+
+
+def test_fred_missing_value_sentinel_normalizes_to_none():
+    session = Mock()
+    session.get.return_value = FakeResponse({"observations": [
+        {"date": "2026-01-01", "value": "."},
+        {"date": "2026-01-02", "value": "2.5"},
+    ]})
+    records = FredClient("key", session=session).observations("DGS10")
+    assert records[0].data["value"] is None
+    assert records[1].data["value"] == "2.5"
+    assert records[0].source_id == "fred"
+    assert records[0].collection == "fred_macro"
+    assert records[0].license_status == "fred_api_terms_review_required"

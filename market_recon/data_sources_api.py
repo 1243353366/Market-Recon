@@ -1,26 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
 import requests
 
+from market_recon.sources.schema import NormalizedRecord
+
 FRED_OBSERVATIONS_URL = "https://api.stlouisfed.org/fred/series/observations"
 USA_SPENDING_AWARDS_URL = "https://api.usaspending.gov/api/v2/search/spending_by_award/"
-
-
-@dataclass(frozen=True)
-class NormalizedRecord:
-    """Normalized public API record with source provenance and retrieval timestamp."""
-
-    source_name: str
-    source_url: str
-    record_id: str
-    record_type: str
-    observed_on: str | None
-    retrieved_at: str
-    data: dict[str, Any]
 
 
 def _retrieved_at() -> str:
@@ -72,13 +60,17 @@ class FredClient:
         retrieved = _retrieved_at()
         return [
             NormalizedRecord(
+                record_id=f"fred:{series_id}:{item.get('date', '')}",
+                source_id="fred",
+                collection="fred_macro",
+                record_type="economic_observation",
                 source_name="Federal Reserve Bank of St. Louis FRED",
                 source_url=f"https://fred.stlouisfed.org/series/{series_id}",
-                record_id=f"fred:{series_id}:{item.get('date', '')}",
-                record_type="economic_observation",
-                observed_on=item.get("date"),
                 retrieved_at=retrieved,
-                data={"series_id": series_id, "value": item.get("value"), "realtime_start": item.get("realtime_start"), "realtime_end": item.get("realtime_end")},
+                observed_at=item.get("date"),
+                data={"series_id": series_id, "value": None if item.get("value") == "." else item.get("value"), "realtime_start": item.get("realtime_start"), "realtime_end": item.get("realtime_end")},
+                license_status="fred_api_terms_review_required",
+                metadata={"series_id": series_id},
             )
             for item in body.get("observations", [])
         ]
@@ -127,12 +119,17 @@ class USASpendingClient:
             if not award_id:
                 continue
             records.append(NormalizedRecord(
+                record_id=f"usaspending:{award_id}",
+                source_id="usaspending",
+                collection="usaspending_awards",
+                record_type="federal_award",
                 source_name="USAspending.gov",
                 source_url=f"https://www.usaspending.gov/award/{award_id}",
-                record_id=f"usaspending:{award_id}",
-                record_type="federal_award",
-                observed_on=item.get("Start Date"),
                 retrieved_at=retrieved,
+                observed_at=item.get("Start Date"),
                 data=item,
+                entity_name=str(item.get("Recipient Name") or "") or None,
+                license_status="public_api_terms_review_required",
+                metadata={"award_id": award_id},
             ))
         return records

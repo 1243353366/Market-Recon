@@ -16,15 +16,23 @@ class ScreenerRule:
 
 
 def run_screening(rows: list[dict[str, Any]], rules: list[ScreenerRule]) -> list[dict[str, Any]]:
+    """Apply numeric rules; rows with missing or non-numeric inputs do not qualify."""
     filtered = rows
     for rule in rules:
-        filtered = [
-            row for row in filtered
-            if (
-                (rule.min_value is None or float(row.get(rule.field, 0)) >= rule.min_value)
-                and (rule.max_value is None or float(row.get(rule.field, 0)) <= rule.max_value)
-            )
-        ]
+        def matches(row: dict[str, Any]) -> bool:
+            value = row.get(rule.field)
+            if value is None:
+                return False
+            try:
+                numeric_value = float(value)
+            except (TypeError, ValueError):
+                return False
+            if pd.isna(numeric_value):
+                return False
+            return ((rule.min_value is None or numeric_value >= rule.min_value)
+                    and (rule.max_value is None or numeric_value <= rule.max_value))
+
+        filtered = [row for row in filtered if matches(row)]
     return filtered
 
 

@@ -53,7 +53,15 @@ def calculate_atr(frame: pd.DataFrame, period: int = 14) -> pd.Series:
     high, low, close = (pd.to_numeric(frame[key], errors="coerce") for key in ("High", "Low", "Close"))
     previous_close = close.shift(1)
     true_range = pd.concat([(high - low).abs(), (high - previous_close).abs(), (low - previous_close).abs()], axis=1).max(axis=1)
-    return true_range.rolling(window=period, min_periods=1).mean()
+    # Wilder smoothing is the standard ATR recurrence, matching calculate_rsi.
+    atr = pd.Series(float("nan"), index=true_range.index, dtype=float)
+    if len(true_range) < period:
+        return atr
+    first = period - 1
+    atr.iloc[first] = true_range.iloc[:period].mean()
+    for index in range(first + 1, len(true_range)):
+        atr.iloc[index] = (atr.iloc[index - 1] * (period - 1) + true_range.iloc[index]) / period
+    return atr
 
 
 def summarize_technical_metrics(frame: pd.DataFrame) -> dict[str, float]:
@@ -64,9 +72,7 @@ def summarize_technical_metrics(frame: pd.DataFrame) -> dict[str, float]:
         raise ValueError("Close column has no numeric values")
     clean = frame.loc[close.index].copy()
     clean["Close"] = close
-    for column in ("High", "Low"):
-        if column not in clean:
-            clean[column] = close
+    has_ohlc = {"High", "Low"}.issubset(clean.columns)
     macd, signal, histogram = calculate_macd(close)
     values = {
         "sma_20": calculate_sma(close, 20).iloc[-1],
@@ -75,6 +81,7 @@ def summarize_technical_metrics(frame: pd.DataFrame) -> dict[str, float]:
         "macd": macd.iloc[-1],
         "signal": signal.iloc[-1],
         "histogram": histogram.iloc[-1],
-        "atr_14": calculate_atr(clean, 14).iloc[-1],
     }
+    if has_ohlc:
+        values["atr_14"] = calculate_atr(clean, 14).iloc[-1]
     return {key: float(value) for key, value in values.items()}
