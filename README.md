@@ -1,72 +1,59 @@
 # Market Recon
 
-Market Recon is a public, open-source stock intelligence platform for retail investors, researchers, and students who want transparent, reproducible market research built around publicly available data.
+Market Recon is a public, open-source stock intelligence platform built for transparent, reproducible market research using only publicly available information.
 
-The project aggregates public financial information, daily market prices, SEC filings, earnings reports, insider transactions, institutional holdings, market news, analyst sentiment, and technical indicators into a single research workflow.
+The goal is to create a free, OSINT-driven workflow for evaluating public companies across pricing, fundamentals, filings, insider activity, institutional ownership, earnings, and technical analysis.
 
-This repository is designed as an educational research toolkit and public market intelligence archive. It does not provide investment advice or trading signals.
+This repository is designed as an educational research toolkit and archival platform. It does not provide investment advice and is not a trading signal engine.
 
 ## Mission
 
-Provide free, high-quality market intelligence using only public data sources and transparent research methodology.
+Provide retail investors and researchers with a transparent, free, and reproducible system for public market intelligence.
 
-## Principles
+## What the platform covers
 
-- Transparency
-- Reproducibility
-- Open data sources
-- Educational research
-- Long-term investing
-- Risk analysis
-
-## What this platform tracks
-
-- Daily stock prices and market data
-- Fundamental metrics and valuation signals
-- Technical indicators and risk measures
-- Insider transactions and governance activity
-- Institutional ownership changes
-- Earnings calendar and transcript intelligence
-- Company, sector, and macroeconomic research
-- News and event monitoring
-
-## Supported data sources
-
-- SEC EDGAR
-- Yahoo Finance
-- Alpha Vantage
-- Financial Modeling Prep
-- Stooq
-- Nasdaq public datasets
-- FRED
-- Trading Economics
-- Public earnings transcript sources
-- Investor relations pages
-
-## Research workflow
-
-1. Collect raw public source data
-2. Normalize values and source metadata
-3. Validate data quality and provenance
-4. Compute research metrics and indicators
-5. Generate structured company reports
-6. Publish dashboards and watchlists
-7. Archive source snapshots and methodology notes
+- Daily stock tracking and market snapshots
+- Fundamentals and valuation analysis
+- Technical indicators and trend monitoring
+- Insider trade activity and governance signals
+- Institutional ownership and 13F monitoring
+- Earnings calendars, surprises, and transcript references
+- News and event aggregation
+- Company, sector, macro, and watchlist research
+- Standardized company reports and dashboard views
 
 ## Repository structure
 
 ```text
 Market-Recon/
 ├── README.md
+├── LICENSE
 ├── .gitignore
+├── requirements.txt
+├── pyproject.toml
+├── market_recon/
+│   ├── __init__.py
+│   ├── cli.py
+│   ├── config.py
+│   ├── data_sources.py
+│   ├── technical_analysis.py
+│   ├── reporting.py
+│   └── __pycache__/
+├── dashboard/
+│   └── app.py
+├── scripts/
+│   └── generate_sample_data.py
+├── data/
+│   ├── examples/
+│   │   ├── sample_watchlist.json
+│   │   └── sample_stock_snapshot.json
+│   └── README.md
 ├── docs/
 │   ├── README.md
 │   ├── methodology.md
 │   ├── data-sources.md
 │   └── tutorials/
 │       └── README.md
-├── data/
-│   └── README.md
 ├── prices/
 │   └── README.md
 ├── earnings/
@@ -92,102 +79,48 @@ Market-Recon/
 ├── tools/
 │   └── README.md
 ├── screeners/
-│   └── README.md
+│   └/README.md
 ├── valuation/
 │   └── README.md
 ├── technical-analysis/
 │   └── README.md
 ├── dashboards/
 │   └── README.md
-└── LICENSE
+└── docs/
 ```
 
-## Core feature areas
+## Core principles
 
-### Daily stock tracking
+- Transparency
+- Reproducibility
+- Open data sources
+- Educational research
+- Long-term investing
+- Risk analysis
 
-For each tracked stock, capture:
+## Data sources
 
-- Ticker
-- Company name
-- Sector and industry
-- Market cap
-- Daily open, high, low, close, volume
-- 52-week high and low
+This project is intended to use public, verifiable data sources including:
 
-### Fundamental analysis
+- SEC EDGAR
+- Yahoo Finance
+- Alpha Vantage
+- Financial Modeling Prep
+- Stooq
+- Nasdaq public datasets
+- FRED
+- Trading Economics
+- Open earnings transcripts
+- Investor relations pages
 
-Track:
+## Automation goals
 
-- Revenue growth
-- Earnings growth
-- Cash flow
-- Debt levels
-- Margins
-- ROE and ROA
-- Free cash flow
-- Valuation multiples
-
-### Technical analysis
-
-Compute:
-
-- SMA
-- EMA
-- RSI
-- MACD
-- ATR
-- VWAP
-- Volume profiles
-- Support and resistance levels
-
-### Insider activity
-
-Track:
-
-- Insider buys
-- Insider sales
-- Director purchases
-- Executive transactions
-
-### Institutional ownership
-
-Monitor:
-
-- 13F filings
-- New positions
-- Position changes
-- Major shareholders
-- Fund concentration
-
-### Earnings intelligence
-
-Monitor:
-
-- Upcoming earnings dates
-- Historical earnings
-- Revenue surprises
-- EPS surprises
-- Call transcripts
-
-### News intelligence
-
-Aggregate:
-
-- Company, sector, and regulatory news
-- M&A activity
-- Product launches
-- Executive changes
-
-## Research templates
-
-Generate standardized company reports with:
-
-- Business overview
-- Financial health
-- Valuation analysis
-- Technical position
-- Investment thesis
+- Refresh daily prices
+- Download filing updates
+- Maintain earnings calendars
+- Refresh news feeds
+- Generate research reports
+- Archive source history for reproducibility
 
 ## Dashboard requirements
 
@@ -200,42 +133,46 @@ Planned dashboards include:
 5. Valuation dashboard
 6. Technical analysis dashboard
 
-## Automation goals
+## Setup
 
-- Refresh daily prices
-- Download new filings
-- Update earnings calendars
-- Refresh news feeds
-- Generate research reports
-- Maintain historical archives
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-## Documentation goals
+## Run the example pipeline
 
-This repository will include documentation for:
+```bash
+python -m market_recon.cli --symbol AAPL --period 180d --report
+```
 
-- Setup
-- Data collection
-- Data validation
-- Research methodology
-- Risk disclosures
-- Contribution guidelines
+## Launch the dashboard
+
+```bash
+streamlit run dashboard/app.py
+```
+
+## Example output
+
+The repository includes example market data and a sample report generator so the project can be explored immediately without needing external credentials or a full data stack.
 
 ## Design philosophy
 
-This project is intentionally built to feel like a free Bloomberg Terminal for retail investors, powered by open-source tools and publicly available information.
+This project follows the vision of a free Bloomberg Terminal for retail investors, powered by public data and open-source tooling.
 
-It emphasizes:
+The work is intentionally focused on:
 
 - Accuracy
 - Transparency
 - Repeatability
 - Educational value
 
-Every dataset should include its source and retrieval method so users can independently verify conclusions.
+Every dataset should include its source and retrieval method so users can independently verify all conclusions.
 
 ## Disclaimer
 
-Market Recon is not a trading signal platform and does not provide investment advice. All information is for educational and research purposes only.
+Market Recon is not a trading signal platform and does not provide investment advice. All information is intended for educational and research use only.
 
 ## License
 
@@ -243,17 +180,11 @@ This project is licensed under the MIT License. See the LICENSE file for details
 
 ## Contributing
 
-Contributions are welcome in the form of:
+Contributions are welcome in the areas of:
 
-- Data pipeline improvements
-- Documentation
-- Research templates
-- Data validation logic
-- Dashboard prototypes
-- Quality-of-data checks
-
-Please contribute with a focus on transparency, reproducibility, and open-source best practices.
-
-## Status
-
-This repository is in its initial scaffolding phase. The structure is set up to support a long-term data collection and research platform for public market intelligence.
+- Data collectors and validation checks
+- Research report templates
+- Dashboard UI improvements
+- Documentation and methodology
+- Technical indicators and analytics
+- Screener logic and watchlist workflows

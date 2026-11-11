@@ -1,0 +1,26 @@
+[
+  {
+    "symbol": "AAPL",
+    "company": "Apple Inc.",
+    "sector": "Technology",
+    "market_cap": 2950000000000
+  },
+  {
+    "symbol": "MSFT",
+    "company": "Microsoft Corporation",
+    "sector": "Technology",
+    "market_cap": 3200000000000
+  },
+  {
+    "symbol": "NVDA",
+    "company": "NVIDIA Corporation",
+    "sector": "Technology",
+    "market_cap": 2800000000000
+  },
+  {
+    "symbol": "AMZN",
+    "company": "Amazon.com Inc.",
+    "sector": "Consumer Discretionary",
+    "market_cap": 2100000000000
+  }
+]

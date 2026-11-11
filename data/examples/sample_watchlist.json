@@ -1,0 +1,63 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = ROOT / "data"
+EXAMPLES_DIR = DATA_DIR / "examples"
+EXAMPLES_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def generate_watchlist() -> None:
+    data = [
+        {"symbol": "AAPL", "company": "Apple Inc.", "sector": "Technology", "market_cap": 2950000000000},
+        {"symbol": "MSFT", "company": "Microsoft Corporation", "sector": "Technology", "market_cap": 3200000000000},
+        {"symbol": "NVDA", "company": "NVIDIA Corporation", "sector": "Technology", "market_cap": 2800000000000},
+        {"symbol": "AMZN", "company": "Amazon.com Inc.", "sector": "Consumer Discretionary", "market_cap": 2100000000000},
+    ]
+    with (EXAMPLES_DIR / "sample_watchlist.json").open("w", encoding="utf-8") as file:
+        json.dump(data, file, indent=2)
+
+
+def generate_stock_snapshot() -> None:
+    snapshot = {
+        "symbol": "AAPL",
+        "company": "Apple Inc.",
+        "sector": "Technology",
+        "industry": "Consumer Electronics",
+        "market_cap": 2950000000000,
+        "pe_ratio": 30.4,
+        "ev_ebitda": 25.7,
+        "revenue_growth": 0.08,
+        "net_margin": 0.25,
+        "country": "United States",
+    }
+    with (EXAMPLES_DIR / "sample_stock_snapshot.json").open("w", encoding="utf-8") as file:
+        json.dump(snapshot, file, indent=2)
+
+
+def generate_price_history() -> None:
+    dates = pd.date_range(start="2025-01-01", periods=60, freq="D")
+    prices = [100.0 + i * 0.7 + (i % 5) * 0.4 for i in range(len(dates))]
+    frame = pd.DataFrame(
+        {
+            "date": dates,
+            "Open": [value - 0.8 for value in prices],
+            "High": [value + 1.2 for value in prices],
+            "Low": [value - 1.5 for value in prices],
+            "Close": prices,
+            "Volume": [1_200_000 + i * 20000 for i in range(len(dates))],
+        }
+    )
+    output = DATA_DIR / "examples" / "sample_price_history.csv"
+    frame.to_csv(output, index=False)
+
+
+if __name__ == "__main__":
+    generate_watchlist()
+    generate_stock_snapshot()
+    generate_price_history()
+    print(f"Sample data generated in {EXAMPLES_DIR}")
