@@ -1,16 +1,3 @@
-# Local secrets, downloaded models, and generated indexes
-.env
-.env.*
-!*.env.example
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-
-# Generated data and vector indexes
-data/qdrant/
-data/outputs/
-*.parquet
-*.sqlite
-*.db
-*.log
+go/ingest-gateway/data/
+rust/signal-engine/target/
+rust/signal-engine/Cargo.lock
