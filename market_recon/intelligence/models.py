@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from typing import Literal
+from math import isfinite
+from typing import Literal, get_args
 
 SignalKind = Literal[
     "management_demand_commentary",
@@ -17,6 +18,18 @@ SignalKind = Literal[
     "regulatory_action",
     "customer_sentiment",
     "open_source_activity",
+    "package_activity",
+    "cve_disclosure",
+    "technical_presentation",
+    "standards_publication",
+    "academic_research",
+    "university_licensing",
+    "permit_activity",
+    "local_agenda",
+    "regulatory_comment",
+    "agency_docket",
+    "litigation_event",
+    "board_change",
 ]
 SignalDirection = Literal["positive", "negative", "mixed", "unknown"]
 
@@ -43,9 +56,17 @@ class PublicSignal:
     def __post_init__(self) -> None:
         if not self.signal_id.strip() or not self.entity_id.strip():
             raise ValueError("signal_id and entity_id must be non-empty")
-        if not self.source_url.startswith("https://"):
-            raise ValueError("Each signal requires an HTTPS source URL")
-        if not 0 <= self.confidence <= 1:
-            raise ValueError("confidence must be between 0 and 1")
+        if self.kind not in get_args(SignalKind):
+            raise ValueError(f"Unsupported signal kind: {self.kind}")
+        if self.direction not in get_args(SignalDirection):
+            raise ValueError(f"Unsupported signal direction: {self.direction}")
+        if not isinstance(self.observed_on, date):
+            raise ValueError("observed_on must be a date")
+        if not self.source_name.strip() or not self.source_url.startswith("https://"):
+            raise ValueError("Each signal requires a source name and HTTPS source URL")
+        if not isfinite(self.confidence) or not 0 <= self.confidence <= 1:
+            raise ValueError("confidence must be finite and between 0 and 1")
+        if self.metric_value is not None and not isfinite(self.metric_value):
+            raise ValueError("metric_value must be finite when provided")
         if not self.summary.strip():
             raise ValueError("summary must be non-empty")
