@@ -126,4 +126,86 @@ mod tests {
         let result = find_divergences(rows, NaiveDate::parse_from_str("2026-02-01", "%Y-%m-%d").unwrap(), 60, 2).unwrap();
         assert!(result.is_empty());
     }
+
+    #[test]
+    fn rejects_non_https_source_url() {
+        let mut s = signal("a", "demand", "positive", "2026-01-01");
+        s.source_url = "http://insecure.example.org/doc".into();
+        let err = find_divergences(vec![s], NaiveDate::parse_from_str("2026-02-01", "%Y-%m-%d").unwrap(), 60, 2).unwrap_err();
+        assert!(err.contains("has no HTTPS source citation"));
+    }
+
+    #[test]
+    fn rejects_empty_identifiers_or_summary() {
+        let mut s1 = signal("  ", "demand", "positive", "2026-01-01");
+        assert!(find_divergences(vec![s1.clone()], NaiveDate::parse_from_str("2026-02-01", "%Y-%m-%d").unwrap(), 60, 2).is_err());
+
+        s1.signal_id = "valid".into();
+        s1.entity_id = "".into();
+        assert!(find_divergences(vec![s1.clone()], NaiveDate::parse_from_str("2026-02-01", "%Y-%m-%d").unwrap(), 60, 2).is_err());
+
+        s1.entity_id = "valid-entity".into();
+        s1.summary = "   ".into();
+        assert!(find_divergences(vec![s1], NaiveDate::parse_from_str("2026-02-01", "%Y-%m-%d").unwrap(), 60, 2).is_err());
+    }
+
+    #[test]
+    fn rejects_unsupported_direction() {
+        let s = signal("a", "demand", "bullish", "2026-01-01");
+        let err = find_divergences(vec![s], NaiveDate::parse_from_str("2026-02-01", "%Y-%m-%d").unwrap(), 60, 2).unwrap_err();
+        assert!(err.contains("has unsupported direction"));
+    }
+
+    #[test]
+    fn validates_window_days_and_min_kinds() {
+        let rows = vec![signal("a", "demand", "positive", "2026-01-01")];
+        let as_of = NaiveDate::parse_from_str("2026-02-01", "%Y-%m-%d").unwrap();
+        assert_eq!(find_divergences(rows.clone(), as_of, 0, 2).unwrap_err(), "window_days must be positive");
+        assert_eq!(find_divergences(rows, as_of, 30, 1).unwrap_err(), "minimum distinct kinds must be at least 2");
+    }
+
+    #[test]
+    fn groups_by_entity_and_isolates_divergences() {
+        let mut s_other = signal("c", "hiring", "positive", "2026-01-03");
+        s_other.entity_id = "CIK2".into();
+        s_other.entity_name = "Other Corp".into();
+
+        let rows = vec![
+            signal("a", "demand", "negative", "2026-01-01"),
+            signal("b", "hiring", "positive", "2026-01-02"),
+            s_other,
+        ];
+        let result = find_divergences(rows, NaiveDate::parse_from_str("2026-02-01", "%Y-%m-%d").unwrap(), 60, 2).unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].entity_id, "CIK1");
+        assert_eq!(result[0].signals.len(), 2);
+    }
+
+    #[test]
+    fn orders_signals_deterministically_by_observed_on_then_id() {
+        let rows = vec![
+            signal("z", "demand", "negative", "2026-01-02"),
+            signal("a", "hiring", "positive", "2026-01-02"),
+            signal("m", "supply", "positive", "2026-01-01"),
+        ];
+        let result = find_divergences(rows, NaiveDate::parse_from_str("2026-02-01", "%Y-%m-%d").unwrap(), 60, 2).unwrap();
+        assert_eq!(result.len(), 1);
+        let ids: Vec<&str> = result[0].signals.iter().map(|s| s.signal_id.as_str()).collect();
+        assert_eq!(ids, vec!["m", "a", "z"]);
+    }
+
+    #[test]
+    fn window_boundaries_are_inclusive() {
+        let as_of = NaiveDate::parse_from_str("2026-02-01", "%Y-%m-%d").unwrap();
+        // 30 days window: start is 2026-01-02
+        let rows = vec![
+            signal("start", "demand", "negative", "2026-01-02"),
+            signal("end", "hiring", "positive", "2026-02-01"),
+            signal("before_start", "supply", "positive", "2026-01-01"),
+        ];
+        let result = find_divergences(rows, as_of, 30, 2).unwrap();
+        assert_eq!(result.len(), 1);
+        let ids: Vec<&str> = result[0].signals.iter().map(|s| s.signal_id.as_str()).collect();
+        assert_eq!(ids, vec!["start", "end"]);
+    }
 }

@@ -59,13 +59,16 @@ class FilingVersionStore:
             """, (document_id, cik, ticker, form, filing_date, source_url,
                   json.dumps(sections, ensure_ascii=False), utc_now_iso()))
 
-    def latest_pair(self, ticker: str, form: str) -> tuple[FilingVersion, FilingVersion] | None:
+    def latest_pair(self, ticker: str, form: str, include_amendments: bool = True) -> tuple[FilingVersion, FilingVersion] | None:
+        base_form = form.upper().removesuffix("/A")
+        forms = (base_form, f"{base_form}/A") if include_amendments else (form.upper(),)
+        placeholders = ", ".join("?" for _ in forms)
         with sqlite3.connect(self.path) as connection:
             connection.row_factory = sqlite3.Row
             rows = connection.execute(
-                "SELECT cik, form, filing_date, source_url, sections_json FROM filing_versions "
-                "WHERE ticker = ? AND form = ? ORDER BY filing_date DESC, document_id DESC LIMIT 2",
-                (ticker.upper(), form.upper()),
+                f"SELECT cik, form, filing_date, source_url, sections_json FROM filing_versions "
+                f"WHERE ticker = ? AND form IN ({placeholders}) ORDER BY filing_date DESC, retrieved_at DESC, document_id DESC LIMIT 2",
+                [ticker.upper(), *forms],
             ).fetchall()
         if len(rows) < 2:
             return None

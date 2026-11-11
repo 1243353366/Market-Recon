@@ -23,10 +23,18 @@ app.add_middleware(
 )
 
 
+def _db_target() -> Path:
+    env_path = os.getenv("MARKET_RECON_DB")
+    if env_path:
+        return Path(env_path)
+    return DEFAULT_DB
+
+
 def _connect() -> sqlite3.Connection:
-    if not DEFAULT_DB.exists():
+    target = _db_target()
+    if not target.exists():
         raise HTTPException(status_code=503, detail="Evidence database is not initialized")
-    connection = sqlite3.connect(f"file:{DEFAULT_DB.resolve()}?mode=ro", uri=True, timeout=5)
+    connection = sqlite3.connect(f"file:{target.resolve()}?mode=ro", uri=True, timeout=5)
     connection.row_factory = sqlite3.Row
     return connection
 

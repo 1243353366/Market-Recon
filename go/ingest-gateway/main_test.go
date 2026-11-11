@@ -8,11 +8,22 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 )
 
 func validRecord() Record {
-	return Record{RecordID: "test:1", SourceID: "test", Collection: "filings", RecordType: "filing", SourceName: "Test Source", SourceURL: "https://example.org/doc", RetrievedAt: "2026-01-01T00:00:00Z", Data: json.RawMessage(`{"value":1}`), LicenseStatus: "reviewed"}
+	return Record{
+		RecordID:      "test:1",
+		SourceID:      "test",
+		Collection:    "filings",
+		RecordType:    "filing",
+		SourceName:    "Test Source",
+		SourceURL:     "https://example.org/doc",
+		RetrievedAt:   "2026-01-01T00:00:00Z",
+		Data:          json.RawMessage(`{"value":1}`),
+		LicenseStatus: "reviewed",
+	}
 }
 
 func TestIngestRequiresBearerAndPersistsJSONL(t *testing.T) {
@@ -57,5 +68,85 @@ func TestIngestRejectsUnknownFields(t *testing.T) {
 	g.authorize(g.ingest)(response, request)
 	if response.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", response.Code)
+	}
+}
+
+func TestIngestRejectsMultipleTrailingRecords(t *testing.T) {
+	g := &Gateway{token: strings.Repeat("x", 24), path: filepath.Join(t.TempDir(), "records.jsonl")}
+	r1, _ := json.Marshal(validRecord())
+	r2, _ := json.Marshal(validRecord())
+	body := append(r1, r2...)
+	request := httptest.NewRequest(http.MethodPost, "/v1/records", bytes.NewReader(body))
+	request.Header.Set("Authorization", "Bearer "+g.token)
+	response := httptest.NewRecorder()
+	g.authorize(g.ingest)(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for trailing records, got %d", response.Code)
+	}
+}
+
+func TestIngestRejectsEmptyRequiredFields(t *testing.T) {
+	requiredFields := []func(*Record){
+		func(r *Record) { r.RecordID = "   " },
+		func(r *Record) { r.SourceID = "" },
+		func(r *Record) { r.Collection = "" },
+		func(r *Record) { r.RecordType = "" },
+		func(r *Record) { r.SourceName = "" },
+		func(r *Record) { r.RetrievedAt = "" },
+		func(r *Record) { r.LicenseStatus = "" },
+	}
+	for i, mutator := range requiredFields {
+		r := validRecord()
+		mutator(&r)
+		if err := r.validate(); err == nil {
+			t.Errorf("case %d: expected error for empty field", i)
+		}
+	}
+}
+
+func TestAuthorizeRejectsNonPostMethod(t *testing.T) {
+	g := &Gateway{token: strings.Repeat("x", 24), path: filepath.Join(t.TempDir(), "records.jsonl")}
+	request := httptest.NewRequest(http.MethodGet, "/v1/records", nil)
+	request.Header.Set("Authorization", "Bearer "+g.token)
+	response := httptest.NewRecorder()
+	g.authorize(g.ingest)(response, request)
+	if response.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405 Method Not Allowed, got %d", response.Code)
+	}
+	if response.Header().Get("Allow") != http.MethodPost {
+		t.Fatalf("expected Allow: POST, got %s", response.Header().Get("Allow"))
+	}
+}
+
+func TestConcurrentIngestAppendsSafely(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "records.jsonl")
+	g := &Gateway{token: strings.Repeat("x", 24), path: path}
+	var wg sync.WaitGroup
+	count := 10
+	for i := 0; i < count; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			r := validRecord()
+			r.RecordID = string(rune('A' + id))
+			body, _ := json.Marshal(r)
+			req := httptest.NewRequest(http.MethodPost, "/v1/records", bytes.NewReader(body))
+			req.Header.Set("Authorization", "Bearer "+g.token)
+			rec := httptest.NewRecorder()
+			g.authorize(g.ingest)(rec, req)
+			if rec.Code != http.StatusAccepted {
+				t.Errorf("concurrent ingest %d failed with code %d", id, rec.Code)
+			}
+		}(i)
+	}
+	wg.Wait()
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("reading persisted file: %v", err)
+	}
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+	if len(lines) != count {
+		t.Fatalf("expected %d persisted records, found %d", count, len(lines))
 	}
 }

@@ -26,6 +26,8 @@ class StooqAdapter:
     def fetch(self, *, symbol: str, start_date: date | None = None, end_date: date | None = None, **_: object) -> list[NormalizedRecord]:
         if not symbol.strip():
             raise ValueError("symbol is required")
+        if start_date and end_date and start_date > end_date:
+            raise ValueError("start_date must not be after end_date")
         provider_symbol = symbol.lower() if "." in symbol else f"{symbol.lower()}.us"
         params = {"s": provider_symbol, "i": "d"}
         if start_date:

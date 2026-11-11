@@ -19,22 +19,22 @@ import (
 const maxRecordBytes = 1 << 20
 
 type Record struct {
-	RecordID     string          `json:"record_id"`
-	SourceID     string          `json:"source_id"`
-	Collection   string          `json:"collection"`
-	RecordType   string          `json:"record_type"`
-	SourceName   string          `json:"source_name"`
-	SourceURL    string          `json:"source_url"`
-	RetrievedAt  string          `json:"retrieved_at"`
-	Data         json.RawMessage `json:"data"`
-	ObservedAt   *string         `json:"observed_at,omitempty"`
-	PublishedAt  *string         `json:"published_at,omitempty"`
-	EntityID     *string         `json:"entity_id,omitempty"`
-	EntityName   *string         `json:"entity_name,omitempty"`
-	Ticker       *string         `json:"ticker,omitempty"`
-	CIK          *string         `json:"cik,omitempty"`
-	LicenseStatus string         `json:"license_status"`
-	Metadata     json.RawMessage `json:"metadata,omitempty"`
+	RecordID      string          `json:"record_id"`
+	SourceID      string          `json:"source_id"`
+	Collection    string          `json:"collection"`
+	RecordType    string          `json:"record_type"`
+	SourceName    string          `json:"source_name"`
+	SourceURL     string          `json:"source_url"`
+	RetrievedAt   string          `json:"retrieved_at"`
+	Data          json.RawMessage `json:"data"`
+	ObservedAt    *string         `json:"observed_at,omitempty"`
+	PublishedAt   *string         `json:"published_at,omitempty"`
+	EntityID      *string         `json:"entity_id,omitempty"`
+	EntityName    *string         `json:"entity_name,omitempty"`
+	Ticker        *string         `json:"ticker,omitempty"`
+	CIK           *string         `json:"cik,omitempty"`
+	LicenseStatus string          `json:"license_status"`
+	Metadata      json.RawMessage `json:"metadata,omitempty"`
 }
 
 type Gateway struct {
@@ -107,6 +107,11 @@ func (g *Gateway) ingest(w http.ResponseWriter, r *http.Request) {
 	}
 	g.mu.Lock()
 	defer g.mu.Unlock()
+	if err := os.MkdirAll(filepath.Dir(g.path), 0700); err != nil {
+		log.Printf("create record dir: %v", err)
+		http.Error(w, "record store unavailable", http.StatusInternalServerError)
+		return
+	}
 	file, err := os.OpenFile(g.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		log.Printf("open record store: %v", err)

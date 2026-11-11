@@ -36,6 +36,8 @@ class YahooFinanceAdapter:
             raise RuntimeError("Install yfinance to use the Yahoo Finance adapter") from exc
         if not symbol.strip():
             raise ValueError("symbol is required")
+        if start_date and end_date and start_date > end_date:
+            raise ValueError("start_date must not be after end_date")
         ticker = yf.Ticker(symbol.strip().upper())
         frame = ticker.history(period=period if start_date is None else None, interval=interval,
                                start=start_date.isoformat() if start_date else None,
