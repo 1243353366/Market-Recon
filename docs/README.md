@@ -1,11 +1,5 @@
-# Documentation
+# Market Recon RAG Architecture
 
-This folder provides the project’s public-facing guidance, methodology, and research standards.
+Market Recon is evolving from a price dashboard into a public-document research and intelligence platform. The RAG architecture and working SEC/Qdrant starter are documented in [docs/rag-architecture.md](docs/rag-architecture.md).
 
-## Contents
-
-- Data sources
-- Methodology
-- Setup notes
-- Research process
-- Contribution guidelines
+The current implementation supports SEC filing ingestion, local JSONL document imports, configurable sentence-transformer embeddings, Qdrant storage, hybrid dense/lexical retrieval, and citation-bearing search results. Most other listed source categories and LLM providers remain planned adapters; see the architecture doc for scope and limitations.

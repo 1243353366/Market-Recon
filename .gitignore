@@ -1,48 +1,16 @@
-# Git ignore
-
-This repository is intended to support data collection, research notebooks, and local tooling. Standard exclusions are included to avoid committing generated data, environment files, and caches.
-
-```gitignore
-# Python
+# Local secrets, downloaded models, and generated indexes
+.env
+.env.*
+!*.env.example
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
 .venv/
 venv/
 
-# Jupyter
-.ipynb_checkpoints/
-
-# Environment
-.env
-.env.*
-.venv
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Data caches and generated output
-cache/
-*.csv
+# Generated data and vector indexes
+data/qdrant/
+data/outputs/
 *.parquet
 *.sqlite
 *.db
-
-# Local build artifacts
-build/
-dist/
-node_modules/
-
-# IDEs
-.vscode/
-.idea/
-
-# GitHub / local temp
-*.tmp
-*.swp
-```
+*.log
