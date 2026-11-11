@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from hashlib import sha256
-from typing import Any
 
 import requests
 from bs4 import BeautifulSoup
@@ -15,51 +14,57 @@ SEC_ARCHIVES_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{accession}/{f
 
 
 class SecEdgarClient:
-    """Small SEC EDGAR collector. Set SEC_USER_AGENT to an identifying contact string."""
+    """Small SEC EDGAR collector with explicit identity and bounded request timeouts."""
 
     def __init__(self, user_agent: str, timeout: int = 30) -> None:
         if not user_agent or "@" not in user_agent:
-            raise ValueError("SEC requires a descriptive User-Agent with contact information; set SEC_USER_AGENT")
+            raise ValueError("Set SEC_USER_AGENT to an identifying application name and contact email")
+        if timeout <= 0:
+            raise ValueError("timeout must be positive")
         self.session = requests.Session()
-        self.session.headers.update({"User-Agent": user_agent, "Accept-Encoding": "gzip, deflate", "Host": "www.sec.gov"})
+        # Do not hard-code Host: requests must route each SEC endpoint to its own host.
+        self.session.headers.update({"User-Agent": user_agent, "Accept-Encoding": "gzip, deflate"})
         self.timeout = timeout
 
     def find_cik(self, ticker: str) -> str:
         response = self.session.get(SEC_TICKERS_URL, timeout=self.timeout)
         response.raise_for_status()
+        wanted = ticker.strip().upper()
         for record in response.json().values():
-            if record.get("ticker", "").upper() == ticker.upper():
+            if str(record.get("ticker", "")).upper() == wanted:
                 return str(record["cik_str"]).zfill(10)
         raise LookupError(f"Ticker not found in SEC company tickers list: {ticker}")
 
     def recent_filings(self, ticker: str, forms: set[str] | None = None, limit: int = 20) -> list[SourceDocument]:
+        if limit < 1:
+            raise ValueError("limit must be positive")
         cik = self.find_cik(ticker)
         response = self.session.get(SEC_SUBMISSIONS_URL.format(cik=cik), timeout=self.timeout)
         response.raise_for_status()
         recent = response.json().get("filings", {}).get("recent", {})
-        rows = zip(recent.get("accessionNumber", []), recent.get("filingDate", []),
-                   recent.get("form", []), recent.get("primaryDocument", []), strict=False)
+        columns = ("accessionNumber", "filingDate", "form", "primaryDocument")
+        row_count = min((len(recent.get(column, [])) for column in columns), default=0)
         docs: list[SourceDocument] = []
-        for accession, filed, form, filename in rows:
-            if forms and form not in forms:
+        for index in range(row_count):
+            accession, filed, form, filename = (recent[column][index] for column in columns)
+            if forms and form not in forms or not accession or not filename:
                 continue
-            if not filename or not accession:
-                continue
-            accession_path = accession.replace("-", "")
-            cik_path = str(int(cik))
-            url = SEC_ARCHIVES_URL.format(cik=cik_path, accession=accession_path, filename=filename)
+            url = SEC_ARCHIVES_URL.format(
+                cik=str(int(cik)), accession=accession.replace("-", ""), filename=filename
+            )
             filing_response = self.session.get(url, timeout=self.timeout)
-            if filing_response.status_code != 200:
+            if filing_response.status_code == 404:
                 continue
+            filing_response.raise_for_status()
             soup = BeautifulSoup(filing_response.content, "html.parser")
             for node in soup(["script", "style", "ix:header"]):
                 node.decompose()
             text = "\n".join(line.strip() for line in soup.get_text("\n").splitlines() if line.strip())
             if not text:
                 continue
-            doc_id = sha256(f"sec:{cik}:{accession}:{filename}".encode()).hexdigest()
+            document_id = sha256(f"sec:{cik}:{accession}:{filename}".encode()).hexdigest()
             docs.append(SourceDocument(
-                document_id=doc_id,
+                document_id=document_id,
                 title=f"{ticker.upper()} {form} filed {filed}",
                 text=text,
                 source_name="SEC EDGAR",

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "known-good-empty-input",
+    "category": "logic",
+    "description": "A correct helper returns an empty result for empty input. A reviewer should not invent a defect.",
+    "fixture": "def first_or_none(items):\n    return items[0] if items else None\n",
+    "expected_finding_ids": [],
+    "severity_by_id": {},
+    "required_checks": ["Known-good code must not receive speculative defect findings."]
+  },
+  {
+    "id": "empty-price-history",
+    "category": "logic-and-reliability",
+    "description": "A metric helper indexes the last row without checking empty input.",
+    "fixture": "def latest_close(frame):\n    return frame['Close'].iloc[-1]\n",
+    "expected_finding_ids": ["empty-input-crash"],
+    "severity_by_id": {"empty-input-crash": "medium"},
+    "required_checks": ["Explain empty input behavior", "Propose a bounded validation fix", "Preserve non-empty behavior"]
+  },
+  {
+    "id": "unrelated-change-trap",
+    "category": "scope-and-regression",
+    "description": "A requested fix to a parser should not rewrite unrelated report output.",
+    "fixture": "def parse_limit(value):\n    limit = int(value)\n    return limit\n\ndef render_title(symbol):\n    return f'Research: {symbol.upper()}'\n",
+    "expected_finding_ids": ["nonpositive-limit"],
+    "severity_by_id": {"nonpositive-limit": "low"},
+    "required_checks": ["Reject non-positive limits", "Leave render_title unchanged"]
+  },
+  {
+    "id": "citation-source-integrity",
+    "category": "api-and-data-provenance",
+    "description": "A search result must preserve the document URL rather than invent a citation.",
+    "fixture": "def citation(document):\n    return {'title': document['title'], 'url': document.get('source_url')}\n",
+    "expected_finding_ids": [],
+    "severity_by_id": {},
+    "required_checks": ["Do not report a missing URL as a valid citation", "Do not fabricate a URL"]
+  }
+]

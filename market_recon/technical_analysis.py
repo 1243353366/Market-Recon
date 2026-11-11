@@ -1,103 +1,80 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any
-
 import pandas as pd
 
-try:
-    import yfinance as yf
-except ImportError:  # pragma: no cover
-    yf = None
+
+def _validate_period(period: int, name: str) -> None:
+    if period < 1:
+        raise ValueError(f"{name} must be a positive integer")
 
 
-@dataclass(frozen=True)
-class DataSource:
-    name: str
-    url: str
-    kind: str
-    notes: str
+def calculate_sma(series: pd.Series, window: int = 20) -> pd.Series:
+    _validate_period(window, "window")
+    return series.rolling(window=window, min_periods=1).mean()
 
 
-PUBLIC_SOURCES = [
-    DataSource(
-        name="Yahoo Finance",
-        url="https://finance.yahoo.com",
-        kind="price_history",
-        notes="Daily market data and historical quotes.",
-    ),
-    DataSource(
-        name="SEC EDGAR",
-        url="https://www.sec.gov/edgar",
-        kind="filings",
-        notes="Public company filings and disclosures.",
-    ),
-    DataSource(
-        name="FRED",
-        url="https://fred.stlouisfed.org",
-        kind="macro",
-        notes="Macroeconomic indicators and policy datasets.",
-    ),
-]
+def calculate_ema(series: pd.Series, span: int = 20) -> pd.Series:
+    _validate_period(span, "span")
+    return series.ewm(span=span, adjust=False).mean()
 
 
-def fetch_price_history(symbol: str, period: str = "180d", interval: str = "1d") -> pd.DataFrame:
-    """Fetch daily price history for a ticker. Falls back to a safe sample when the library is unavailable."""
-    if yf is not None:
-        data = yf.download(symbol, period=period, interval=interval, progress=False, auto_adjust=False)
-        if not data.empty:
-            return data.reset_index().rename(columns={"index": "date"})
+def calculate_rsi(series: pd.Series, period: int = 14) -> pd.Series:
+    """Wilder-smoothed RSI; flat series resolves to 50, zero-loss gains to 100."""
+    _validate_period(period, "period")
+    values = pd.to_numeric(series, errors="coerce")
+    delta = values.diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+    average_gain = gain.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+    average_loss = loss.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+    ratio = average_gain / average_loss.replace(0, float("nan"))
+    rsi = 100 - 100 / (1 + ratio)
+    rsi = rsi.mask((average_loss == 0) & (average_gain > 0), 100)
+    rsi = rsi.mask((average_loss == 0) & (average_gain == 0), 50)
+    return rsi.fillna(50)
 
-    sample_rows = [
-        {"date": "2025-01-02", "Open": 100.0, "High": 102.0, "Low": 99.0, "Close": 101.5, "Adj Close": 101.5, "Volume": 1200000},
-        {"date": "2025-01-03", "Open": 101.5, "High": 104.0, "Low": 100.5, "Close": 103.2, "Adj Close": 103.2, "Volume": 1400000},
-        {"date": "2025-01-06", "Open": 103.2, "High": 105.0, "Low": 102.1, "Close": 104.8, "Adj Close": 104.8, "Volume": 1600000},
-        {"date": "2025-01-07", "Open": 104.8, "High": 106.1, "Low": 103.9, "Close": 105.6, "Adj Close": 105.6, "Volume": 1800000},
-        {"date": "2025-01-08", "Open": 105.6, "High": 106.8, "Low": 104.9, "Close": 106.3, "Adj Close": 106.3, "Volume": 1700000},
-    ]
-    return pd.DataFrame(sample_rows)
+
+def calculate_macd(series: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> tuple[pd.Series, pd.Series, pd.Series]:
+    for value, name in ((fast, "fast"), (slow, "slow"), (signal, "signal")):
+        _validate_period(value, name)
+    if fast >= slow:
+        raise ValueError("fast period must be smaller than slow period")
+    macd = calculate_ema(series, fast) - calculate_ema(series, slow)
+    signal_line = macd.ewm(span=signal, adjust=False).mean()
+    return macd, signal_line, macd - signal_line
 
 
-def fetch_company_snapshot(symbol: str) -> dict[str, Any]:
-    """Return a minimal structured company snapshot record."""
-    company_map = {
-        "AAPL": {
-            "symbol": "AAPL",
-            "company": "Apple Inc.",
-            "sector": "Technology",
-            "industry": "Consumer Electronics",
-            "market_cap": 2950000000000,
-        },
-        "MSFT": {
-            "symbol": "MSFT",
-            "company": "Microsoft Corporation",
-            "sector": "Technology",
-            "industry": "Software Infrastructure",
-            "market_cap": 3200000000000,
-        },
-        "NVDA": {
-            "symbol": "NVDA",
-            "company": "NVIDIA Corporation",
-            "sector": "Technology",
-            "industry": "Semiconductors",
-            "market_cap": 2800000000000,
-        },
+def calculate_atr(frame: pd.DataFrame, period: int = 14) -> pd.Series:
+    _validate_period(period, "period")
+    required = {"High", "Low", "Close"}
+    missing = required.difference(frame.columns)
+    if missing:
+        raise ValueError(f"Missing OHLC columns: {', '.join(sorted(missing))}")
+    high, low, close = (pd.to_numeric(frame[key], errors="coerce") for key in ("High", "Low", "Close"))
+    previous_close = close.shift(1)
+    true_range = pd.concat([(high - low).abs(), (high - previous_close).abs(), (low - previous_close).abs()], axis=1).max(axis=1)
+    return true_range.rolling(window=period, min_periods=1).mean()
+
+
+def summarize_technical_metrics(frame: pd.DataFrame) -> dict[str, float]:
+    if frame.empty or "Close" not in frame:
+        raise ValueError("Price frame must contain at least one Close value")
+    close = pd.to_numeric(frame["Close"], errors="coerce").dropna()
+    if close.empty:
+        raise ValueError("Close column has no numeric values")
+    clean = frame.loc[close.index].copy()
+    clean["Close"] = close
+    for column in ("High", "Low"):
+        if column not in clean:
+            clean[column] = close
+    macd, signal, histogram = calculate_macd(close)
+    values = {
+        "sma_20": calculate_sma(close, 20).iloc[-1],
+        "ema_20": calculate_ema(close, 20).iloc[-1],
+        "rsi_14": calculate_rsi(close, 14).iloc[-1],
+        "macd": macd.iloc[-1],
+        "signal": signal.iloc[-1],
+        "histogram": histogram.iloc[-1],
+        "atr_14": calculate_atr(clean, 14).iloc[-1],
     }
-
-    record = company_map.get(symbol.upper(), {
-        "symbol": symbol.upper(),
-        "company": f"{symbol.upper()} Company",
-        "sector": "Unknown",
-        "industry": "Unknown",
-        "market_cap": 0,
-    })
-    return record
-
-
-def list_example_watchlist() -> list[dict[str, Any]]:
-    return [
-        {"symbol": "AAPL", "company": "Apple Inc.", "sector": "Technology", "market_cap": 2950000000000},
-        {"symbol": "MSFT", "company": "Microsoft Corporation", "sector": "Technology", "market_cap": 3200000000000},
-        {"symbol": "NVDA", "company": "NVIDIA Corporation", "sector": "Technology", "market_cap": 2800000000000},
-        {"symbol": "AMZN", "company": "Amazon.com Inc.", "sector": "Consumer Discretionary", "market_cap": 2100000000000},
-    ]
+    return {key: float(value) for key, value in values.items()}

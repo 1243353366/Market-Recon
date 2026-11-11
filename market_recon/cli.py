@@ -1,39 +1,35 @@
 from __future__ import annotations
 
-from typing import Any
+import argparse
+from pathlib import Path
+
+from .data_sources import fetch_company_snapshot, fetch_price_history
+from .reporting import build_company_report
+from .technical_analysis import summarize_technical_metrics
 
 
-def build_company_report(symbol: str, snapshot: dict[str, Any], metrics: dict[str, float]) -> str:
-    trend = "Bullish" if metrics["macd"] > metrics["signal"] and metrics["rsi_14"] > 50 else "Cautious"
-    report = f"""# {snapshot.get('company', symbol.upper())} ({symbol.upper()})
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Market Recon public-market research CLI")
+    parser.add_argument("--symbol", default="AAPL", help="Ticker symbol")
+    parser.add_argument("--period", default="180d", help="Price-history lookback accepted by the data provider")
+    parser.add_argument("--report", action="store_true", help="Print a Markdown research summary")
+    parser.add_argument("--output", type=Path, help="Optional report output path")
+    args = parser.parse_args()
 
-## Business overview
-{snapshot.get('company', symbol.upper())} operates in the {snapshot.get('industry', 'Unknown')} industry within the {snapshot.get('sector', 'Unknown')} sector.
+    prices = fetch_price_history(args.symbol, period=args.period)
+    metrics = summarize_technical_metrics(prices)
+    snapshot = fetch_company_snapshot(args.symbol)
+    if args.report or args.output:
+        report = build_company_report(args.symbol, snapshot, metrics)
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(report, encoding="utf-8")
+            print(f"Report written to {args.output}")
+        else:
+            print(report)
+    else:
+        print(f"Symbol: {args.symbol.upper()}\nSnapshot: {snapshot}\nMetrics: {metrics}")
 
-## Financial and market snapshot
-- Market cap: ${snapshot.get('market_cap', 0):,.0f}
-- Sector: {snapshot.get('sector', 'Unknown')}
-- Industry: {snapshot.get('industry', 'Unknown')}
 
-## Technical view
-- SMA(20): ${metrics['sma_20']:.2f}
-- EMA(20): ${metrics['ema_20']:.2f}
-- RSI(14): {metrics['rsi_14']:.2f}
-- MACD: {metrics['macd']:.2f}
-- Signal: {metrics['signal']:.2f}
-- ATR(14): {metrics['atr_14']:.2f}
-- Overall trend: {trend}
-
-## Investment thesis
-The company is currently showing a {trend.lower()} technical setup based on public market data and valuation context. This report is educational and should be used with additional fundamental and risk analysis.
-
-## Risk notes
-- Validate source provenance for all calculations.
-- Cross-check price action against earnings, filings, and news catalysts.
-- Distinguish reported financials from estimates and third-party aggregations.
-
-## Sources
-- Public market data and source metadata should be recorded for every report.
-- SEC filings, company disclosures, and public earnings sources should be reviewed before making conclusions.
-"""
-    return report
+if __name__ == "__main__":
+    main()
