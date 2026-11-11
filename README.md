@@ -1,5 +1,3 @@
-## Cross-signal intelligence MVP
+## Data-source adapters
 
-Added a source-linked public-signal schema and deterministic divergence detector for mixed observations across the same resolved entity and date window. This supports research review of combinations such as weak demand commentary alongside hiring growth, while preserving evidence links and explicitly avoiding causal or investment conclusions. See [docs/supply-chain-intelligence.md](docs/supply-chain-intelligence.md).
-
-The named external services are not represented as integrated collectors: the source catalog marks planned connectors and terms/license review requirements. Data adapters must honor terms, use authorized public access, and preserve provenance.
+Added a source registry that marks each connector's actual implementation status, authentication, and caveats. FRED series observations and USAspending award search have starter clients; SEC filing ingestion remains limited. Alpha Vantage, FMP, ImportYeti, and Quiver are listed as planned/access-review sources, not claimed integrations. See [docs/data-sources.md](docs/data-sources.md).
