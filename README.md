@@ -1,28 +1,29 @@
 # Market Recon
 
-Market Recon is a public, open-source stock intelligence platform built for transparent, reproducible market research using only publicly available information.
+Market Recon is a public, open-source stock intelligence platform designed to help retail investors, students, and researchers evaluate public equities using transparent, reproducible market research.
 
-The goal is to create a free, OSINT-driven workflow for evaluating public companies across pricing, fundamentals, filings, insider activity, institutional ownership, earnings, and technical analysis.
+The project brings together public financial data, daily market prices, SEC filings, earnings context, insider activity, management and governance signals, institutional ownership, technical indicators, and screening workflows into one research toolkit.
 
-This repository is designed as an educational research toolkit and archival platform. It does not provide investment advice and is not a trading signal engine.
+This repository is not a trading signal engine and does not provide investment advice. It is built for educational research, risk analysis, and transparent market intelligence.
 
 ## Mission
 
-Provide retail investors and researchers with a transparent, free, and reproducible system for public market intelligence.
+Offer a free, open-source alternative to fragmented research workflows by aggregating public-market intelligence into a transparent and reproducible platform.
 
-## What the platform covers
+## Major feature areas
 
-- Daily stock tracking and market snapshots
-- Fundamentals and valuation analysis
+- Daily stock price tracking and market snapshots
+- Fundamental analysis and valuation context
 - Technical indicators and trend monitoring
-- Insider trade activity and governance signals
-- Institutional ownership and 13F monitoring
-- Earnings calendars, surprises, and transcript references
-- News and event aggregation
-- Company, sector, macro, and watchlist research
-- Standardized company reports and dashboard views
+- Insider activity and governance monitoring
+- Institutional ownership overview
+- Earnings calendars and surprise analysis
+- News and event intelligence
+- Company and sector research templates
+- Watchlists and investment screens
+- Dashboard views for market monitoring
 
-## Repository structure
+## Repository layout
 
 ```text
 Market-Recon/
@@ -37,21 +38,31 @@ Market-Recon/
 │   ├── config.py
 │   ├── data_sources.py
 │   ├── technical_analysis.py
-│   ├── reporting.py
-│   └── __pycache__/
+│   ├── fundamentals.py
+│   ├── screener.py
+│   ├── watchlist.py
+│   ├── news.py
+│   └── reporting.py
 ├── dashboard/
 │   └── app.py
 ├── scripts/
-│   └── generate_sample_data.py
+│   ├── generate_sample_data.py
+│   └── seed_demo_data.py
 ├── data/
+│   ├── README.md
 │   ├── examples/
 │   │   ├── sample_watchlist.json
-│   │   └── sample_stock_snapshot.json
-│   └── README.md
+│   │   ├── sample_stock_snapshot.json
+│   │   ├── sample_fundamentals.json
+│   │   ├── sample_news.json
+│   │   └── sample_price_history.csv
+│   └── outputs/
+│       └── .gitkeep
 ├── docs/
 │   ├── README.md
 │   ├── methodology.md
 │   ├── data-sources.md
+│   ├── risk-disclosure.md
 │   └── tutorials/
 │       └── README.md
 ├── prices/
@@ -69,7 +80,7 @@ Market-Recon/
 ├── research/
 │   └── README.md
 ├── company-analysis/
-│   └── README.md
+│   └/README.md
 ├── sector-analysis/
 │   └── README.md
 ├── macroeconomics/
@@ -79,28 +90,19 @@ Market-Recon/
 ├── tools/
 │   └── README.md
 ├── screeners/
-│   └/README.md
+│   └── README.md
 ├── valuation/
 │   └── README.md
 ├── technical-analysis/
 │   └── README.md
 ├── dashboards/
 │   └── README.md
-└── docs/
+└── LICENSE
 ```
 
-## Core principles
+## Data sources and provenance
 
-- Transparency
-- Reproducibility
-- Open data sources
-- Educational research
-- Long-term investing
-- Risk analysis
-
-## Data sources
-
-This project is intended to use public, verifiable data sources including:
+The platform is built around transparent sourcing. Planned and supported public sources include:
 
 - SEC EDGAR
 - Yahoo Finance
@@ -110,28 +112,29 @@ This project is intended to use public, verifiable data sources including:
 - Nasdaq public datasets
 - FRED
 - Trading Economics
-- Open earnings transcripts
+- Public earnings transcript archives
 - Investor relations pages
 
-## Automation goals
-
-- Refresh daily prices
-- Download filing updates
-- Maintain earnings calendars
-- Refresh news feeds
-- Generate research reports
-- Archive source history for reproducibility
+Each dataset should include a documented source, retrieval method, timestamp, and transformation notes so conclusions can be independently verified.
 
 ## Dashboard requirements
 
-Planned dashboards include:
+This repository includes a starter dashboard covering:
 
-1. Market overview dashboard
-2. Watchlist dashboard
-3. Earnings dashboard
-4. Insider activity dashboard
-5. Valuation dashboard
-6. Technical analysis dashboard
+1. Market overview
+2. Watchlist management
+3. Valuation checklists
+4. Technical indicator summaries
+5. Public research report output
+
+## Research workflow
+
+1. Pull public data from trusted sources
+2. Standardize and validate records
+3. Build technical and fundamental context
+4. Monitor company and sector catalysts
+5. Generate a structured company report
+6. Archive the source and transformation trail
 
 ## Setup
 
@@ -141,50 +144,64 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Run the example pipeline
+## Run the CLI
 
 ```bash
 python -m market_recon.cli --symbol AAPL --period 180d --report
 ```
 
-## Launch the dashboard
+## Run the dashboard
 
 ```bash
 streamlit run dashboard/app.py
 ```
 
-## Example output
+## Generate demo data
 
-The repository includes example market data and a sample report generator so the project can be explored immediately without needing external credentials or a full data stack.
+```bash
+python scripts/generate_sample_data.py
+python scripts/seed_demo_data.py
+```
 
-## Design philosophy
+## Example outputs
 
-This project follows the vision of a free Bloomberg Terminal for retail investors, powered by public data and open-source tooling.
+The project includes sample market, watchlist, fundamentals, and news data so the platform can be explored immediately without external credentials.
 
-The work is intentionally focused on:
+## Methodology standards
 
-- Accuracy
-- Transparency
-- Repeatability
-- Educational value
+- Use only public information
+- Preserve source provenance
+- Separate raw and transformed data
+- Distinguish reported data from estimated values
+- Publish assumptions and limitations
+- Encourage reproducible research
 
-Every dataset should include its source and retrieval method so users can independently verify all conclusions.
+## Risk disclosure
 
-## Disclaimer
+Market Recon is built for educational and research purposes only. It is not designed as a trading recommendation engine or financial advisory service.
 
-Market Recon is not a trading signal platform and does not provide investment advice. All information is intended for educational and research use only.
+## Documentation
+
+Additional guidance can be found in:
+
+- docs/methodology.md
+- docs/data-sources.md
+- docs/risk-disclosure.md
+- docs/tutorials/README.md
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is distributed under an MIT license. See the LICENSE file for details.
 
 ## Contributing
 
-Contributions are welcome in the areas of:
+Contributions are welcome in these areas:
 
-- Data collectors and validation checks
-- Research report templates
-- Dashboard UI improvements
-- Documentation and methodology
-- Technical indicators and analytics
-- Screener logic and watchlist workflows
+- Data collection and validation
+- Research templates and analysis notes
+- Dashboard design and UX
+- Screener logic and watchlist features
+- Documentation improvements
+- Technical indicators and report generation
+
+Please keep contributions transparent, reproducible, and grounded in public information.

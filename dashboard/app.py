@@ -1,37 +1,41 @@
 from __future__ import annotations
 
-import argparse
+import json
 from pathlib import Path
 
-from .data_sources import fetch_company_snapshot, fetch_price_history
-from .reporting import build_company_report
-from .technical_analysis import summarize_technical_metrics
+ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = ROOT / "data" / "examples"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Market Recon CLI")
-    parser.add_argument("--symbol", default="AAPL", help="Ticker symbol to analyze")
-    parser.add_argument("--period", default="180d", help="Lookback period for price data")
-    parser.add_argument("--report", action="store_true", help="Emit a Markdown research report")
-    parser.add_argument("--output", type=Path, default=None, help="Optional output path for the report")
-    args = parser.parse_args()
+    watchlist = [
+        {"symbol": "AAPL", "company": "Apple Inc.", "sector": "Technology"},
+        {"symbol": "MSFT", "company": "Microsoft Corporation", "sector": "Technology"},
+        {"symbol": "NVDA", "company": "NVIDIA Corporation", "sector": "Technology"},
+        {"symbol": "AMZN", "company": "Amazon.com Inc.", "sector": "Consumer Discretionary"},
+    ]
+    fundamentals = {
+        "AAPL": {"symbol": "AAPL", "pe_ratio": 30.4, "market_cap": 2950000000000, "revenue_growth": 0.08},
+        "MSFT": {"symbol": "MSFT", "pe_ratio": 34.1, "market_cap": 3200000000000, "revenue_growth": 0.12},
+        "NVDA": {"symbol": "NVDA", "pe_ratio": 53.6, "market_cap": 2800000000000, "revenue_growth": 0.56},
+        "AMZN": {"symbol": "AMZN", "pe_ratio": 37.4, "market_cap": 2100000000000, "revenue_growth": 0.11},
+    }
+    news = [
+        {"title": "Public market sentiment remains positive for AI-linked hardware sellers", "source": "Public coverage", "category": "Technology", "sentiment": "Positive"},
+        {"title": "Treasury yields remain an active macro headwind for equity valuation", "source": "Public coverage", "category": "Macro", "sentiment": "Cautious"},
+    ]
 
-    snapshot = fetch_company_snapshot(args.symbol)
-    frame = fetch_price_history(args.symbol, period=args.period)
-    metrics = summarize_technical_metrics(frame)
-    report = build_company_report(args.symbol, snapshot, metrics)
+    with (DATA_DIR / "sample_watchlist.json").open("w", encoding="utf-8") as file:
+        json.dump(watchlist, file, indent=2)
 
-    if args.report:
-        if args.output is not None:
-            args.output.parent.mkdir(parents=True, exist_ok=True)
-            args.output.write_text(report, encoding="utf-8")
-            print(f"Report written to {args.output}")
-        else:
-            print(report)
-    else:
-        print(f"Symbol: {args.symbol}")
-        print(f"Snapshot: {snapshot}")
-        print(f"Technical metrics: {metrics}")
+    with (DATA_DIR / "sample_fundamentals.json").open("w", encoding="utf-8") as file:
+        json.dump(fundamentals, file, indent=2)
+
+    with (DATA_DIR / "sample_news.json").open("w", encoding="utf-8") as file:
+        json.dump(news, file, indent=2)
+
+    print(f"Seeded demo data in {DATA_DIR}")
 
 
 if __name__ == "__main__":
