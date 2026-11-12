@@ -95,6 +95,13 @@ python -m market_recon.sources.filing_cli compare --ticker AAPL --form 10-K
 
 ---
 
+
+---
+
+## Engineering Quality & Defensive Playbook
+
+Market-Recon maintains an autonomous engineering post-mortem catalog and defensive playbook in [FAILURE_CHANGELOG.md](FAILURE_CHANGELOG.md). It documents observed failure modes, root-cause analyses, and invariants across Python, Go, Rust, and TypeScript to systematically prevent pipeline and CI regressions.
+
 ## License & Limitations
 
 Distributed under the MIT License.

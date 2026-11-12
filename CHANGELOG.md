@@ -5,6 +5,13 @@ All notable changes to Market Recon are documented in this file.
 ## [Unreleased]
 
 ### Fixed
+- **Signal Intelligence Robustness & Deduplication**:
+  - Fixed `AttributeError` in `PublicSignal.__post_init__` by enforcing strict `isinstance(val, str)` type checks before calling string methods, cleanly raising `ValueError` on malformed inputs.
+  - Added `(entity_id, signal_id)` deduplication in `find_cross_signal_divergences` to prevent duplicate evidence from fabricating false mixed-signal clusters.
+  - Selected canonical entity name from the most recent signal observation rather than stale oldest records.
+  - Qualified divergence results with `distinct_source_count` and `divergence_caveat` when evidence is uncorroborated (single source) or compares disparate baselines.
+- **CI TypeScript Test Compatibility (FAIL-001)**: Fixed CI failure where Node 20 LTS crashed after 11s due to unsupported `--experimental-strip-types`. Configured `web/tsconfig.test.json` compiling tests to `.test-dist/` and running native `node --test`, certified across both Node 20 and Node 22 matrix jobs in GitHub Actions.
+- **Engineering Failure Changelog**: Added `FAILURE_CHANGELOG.md` as an operational defensive playbook documenting observed failure modes, root causes, and engineering invariants to prevent regressions across cross-language pipelines.
 - **Filing Classifier False Positives (Backlog #1)**: Enforced strict requirement that changed lines must contain category-specific terminology. Section hints (e.g. Item 1, Item 1A, Item 7) now act strictly as scoping context and confidence modifiers rather than independent triggers, preventing unrelated business or accounting prose from being misclassified as supply chain, litigation, or executive changes.
 - **Finding Provenance & Audit Metadata**: Enhanced `FilingFinding` with `matched_phrase`, `matched_section_hint`, `match_reason`, and explicit `analyst_status` ("unreviewed" by default, supporting "confirmed", "false_positive", and "uncertain").
 - **Go Ingest Gateway**: Enforced JSON object structure on `data` and `metadata` fields, rejecting primitive values and arrays with HTTP 400 before persistence. Fixed 500 error on nested directory targets by ensuring `os.MkdirAll` is invoked before opening the JSONL store in `ingest()`.

@@ -54,19 +54,28 @@ class PublicSignal:
     confidence: float = 0.5
 
     def __post_init__(self) -> None:
-        if not self.signal_id.strip() or not self.entity_id.strip():
-            raise ValueError("signal_id and entity_id must be non-empty")
+        for field_name in ("signal_id", "entity_id", "entity_name", "summary", "source_url"):
+            val = getattr(self, field_name)
+            if not isinstance(val, str) or not val.strip():
+                raise ValueError(f"{field_name} must be a non-empty string")
+
+        if not isinstance(self.source_name, str) or not self.source_name.strip():
+            raise ValueError("Each signal requires a valid source name (source_name)")
+
+        for opt_field in ("metric_name", "unit", "baseline"):
+            opt_val = getattr(self, opt_field)
+            if opt_val is not None and (not isinstance(opt_val, str) or not opt_val.strip()):
+                raise ValueError(f"{opt_field} must be a non-empty string when provided")
+
         if self.kind not in get_args(SignalKind):
             raise ValueError(f"Unsupported signal kind: {self.kind}")
         if self.direction not in get_args(SignalDirection):
             raise ValueError(f"Unsupported signal direction: {self.direction}")
         if not isinstance(self.observed_on, date):
             raise ValueError("observed_on must be a date")
-        if not self.source_name.strip() or not self.source_url.startswith("https://"):
-            raise ValueError("Each signal requires a source name and HTTPS source URL")
+        if not self.source_url.startswith("https://"):
+            raise ValueError("Each signal requires an HTTPS source URL")
         if not isfinite(self.confidence) or not 0 <= self.confidence <= 1:
             raise ValueError("confidence must be finite and between 0 and 1")
         if self.metric_value is not None and not isfinite(self.metric_value):
             raise ValueError("metric_value must be finite when provided")
-        if not self.summary.strip():
-            raise ValueError("summary must be non-empty")

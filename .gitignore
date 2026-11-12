@@ -9,3 +9,6 @@ __pycache__/
 data/
 node_modules/
 dist/
+.test-dist/
+web/.test-dist/
+web/dist/
