@@ -44,3 +44,49 @@ def test_same_filing_form_and_company_required():
         assert "different CIKs" in str(exc)
     else:
         raise AssertionError("Expected CIK mismatch")
+
+
+def test_adversarial_unrelated_changes_in_broad_sections_do_not_produce_false_positives():
+    """Adversarial check: changes in Item 1, Item 1A, or Item 7 discussing general business,
+    accounting, or marketing must not trigger supply chain, litigation, or executive findings.
+    """
+    older = filing("10-K", "2025-02-01", "https://www.sec.gov/old-10k", {
+        "Part I Item 1": "Our business primarily provides enterprise cloud software and subscription services.\nWe operate across three commercial geographic regions.",
+        "Part I Item 1A": "We face macroeconomic uncertainty in European consumer markets.\nCurrency fluctuations could impact our international operations.",
+        "Part II Item 7": "Revenue increased by 14% primarily due to higher cloud adoption.\nGross margin expanded by 120 basis points reflecting software mix.",
+    })
+    newer = filing("10-K", "2026-02-01", "https://www.sec.gov/new-10k", {
+        "Part I Item 1": "Our business primarily provides enterprise cloud software, generative AI solutions, and subscription services.\nWe operate across four commercial geographic regions including Latin America.",
+        "Part I Item 1A": "We face macroeconomic uncertainty in global commercial markets.\nWe adopted standard guidance regarding lease accounting under ASC 842.",
+        "Part II Item 7": "Revenue increased by 18% primarily due to higher cloud and AI adoption.\nGross margin expanded by 150 basis points reflecting favorable enterprise software mix.",
+    })
+    results = summarize_filing_changes(older, newer)
+
+    # None of these changes contain supply chain keywords (supplier, vendor, manufacturing, logistics, etc.)
+    # Under the previous bug, all changed lines in Item 1, Item 1A, and Item 7 were mislabeled as supply_chain_changes!
+    assert len(results["supply_chain_changes"]) == 0, (
+        f"Expected 0 supply chain findings on unrelated text, got {results['supply_chain_changes']}"
+    )
+    # None of these changes contain litigation keywords
+    assert len(results["litigation_changes"]) == 0
+    # None of these changes contain executive changes keywords
+    assert len(results["executive_changes"]) == 0
+    # None of these changes contain compensation keywords
+    assert len(results["compensation_changes"]) == 0
+
+
+def test_section_and_phrase_match_reports_detailed_reason():
+    older = filing("10-K", "2025-02-01", "https://www.sec.gov/old", {
+        "Part II Item 7": "Our inventory levels remained stable throughout the fiscal year.",
+    })
+    newer = filing("10-K", "2026-02-01", "https://www.sec.gov/new", {
+        "Part II Item 7": "Our vendor inventory and component logistics faced material capacity constraints.",
+    })
+    results = summarize_filing_changes(older, newer)
+    findings = results["supply_chain_changes"]
+    assert len(findings) == 2  # 1 removed, 1 new
+    new_finding = next(f for f in findings if f.change == "new")
+    assert new_finding.matched_section_hint is True
+    assert new_finding.matched_phrase in ("vendor", "inventory", "component", "logistics", "capacity constraint")
+    assert "phrase" in new_finding.match_reason and "relevant section" in new_finding.match_reason
+    assert new_finding.analyst_status == "unreviewed"

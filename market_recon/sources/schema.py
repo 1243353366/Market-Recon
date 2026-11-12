@@ -30,6 +30,7 @@ class NormalizedRecord:
     cik: str | None = None
     license_status: str = "review_required"
     metadata: dict[str, Any] = field(default_factory=dict)
+    run_id: str | None = None
 
     def __post_init__(self) -> None:
         for name in ("record_id", "source_id", "collection", "record_type", "source_name"):

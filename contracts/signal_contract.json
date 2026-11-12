@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "signal_id": "sig:sec:aapl:shipping_delay:20260201",
+  "entity_id": "entity:sec:cik:0000320193",
+  "entity_name": "Apple Inc.",
+  "category": "supply_chain",
+  "kind": "shipping_delay",
+  "direction": "negative",
+  "summary": "SEC 10-K reported shipping and logistics disruption across overseas component suppliers.",
+  "source_name": "SEC EDGAR",
+  "source_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019324000106/aapl-20240928.htm",
+  "observed_on": "2026-02-01",
+  "metric_name": "supplier_lead_time_days",
+  "metric_value": -14.5,
+  "confidence": 0.95
+}

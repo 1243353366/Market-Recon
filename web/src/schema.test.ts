@@ -112,3 +112,18 @@ test('calculateTotalPages calculates accurate upper bounds', () => {
   assert.equal(calculateTotalPages(26, 25), 2);
   assert.equal(calculateTotalPages(100, 25), 4);
 });
+
+test('parses shared record contract fixture and resolves license status', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const fixturePath = path.resolve('../contracts/record_contract.json');
+  const raw = fs.readFileSync(fixturePath, 'utf-8');
+  const record: RecordItem = JSON.parse(raw);
+
+  assert.equal(record.record_id, 'rec:sec:0000320193:20241101');
+  assert.equal(record.ticker, 'AAPL');
+  assert.equal(record.license_status, 'public_domain');
+  assert.equal(resolveLicenseStatus(record), 'public_domain');
+  assert.ok(typeof record.data === 'object' && record.data !== null);
+  assert.ok(typeof record.metadata === 'object' && record.metadata !== null);
+});

@@ -19,12 +19,18 @@ class FilingFinding:
     before_filing_date: str
     after_filing_date: str
     method: str = "heuristic text-diff classification; human verification required"
+    matched_phrase: str = ""
+    matched_section_hint: bool = False
+    match_reason: str = ""
+    analyst_status: str = "unreviewed"  # unreviewed | confirmed | false_positive | uncertain
 
 
 # Rules are intentionally transparent. They surface candidate changed lines only;
 # they do not establish materiality, legal status, causation, or business impact.
+# A changed line MUST match category keywords/phrases. Section hints scope and
+# contextualize matches; section presence alone does NOT classify a changed line.
 _RULES: tuple[tuple[str, tuple[str, ...], tuple[str, ...]], ...] = (
-    ("risks", ("risk factor", "material adverse", "could adversely", "uncertaint", "exposure to", "may adversely", "could negatively"), ("item 1a", "risk factor")),
+    ("risks", ("risk factor", "concentration risk", "risk", "risks", "material adverse", "could adversely", "adversely affect", "adversely", "uncertaint", "exposure to", "may adversely", "could negatively", "threat to", "cybersecurity"), ("item 1a", "risk factor")),
     ("executive_changes", ("chief executive", "chief financial", "chief operating", "ceo", "cfo", "coo", "appointed", "resigned", "retired", "departure", "successor", "executive officer", "director nominee"), ("executive", "management", "item 10", "item 5")),
     ("compensation_changes", ("compensation", "remuneration", "salary", "incentive plan", "performance award", "equity award", "stock option", "bonus", "pay ratio", "clawback"), ("compensation", "item 11", "executive compensation")),
     ("supply_chain_changes", ("supply chain", "supplier", "vendor", "sourcing", "manufactur", "component", "inventory", "logistics", "shipping", "procurement", "raw material", "capacity constraint"), ("supply", "item 1", "item 1a", "item 7")),
@@ -49,11 +55,36 @@ def _changed_lines(before: str, after: str) -> tuple[list[str], list[str]]:
     return added, removed
 
 
-def _matches(category: str, section: str, line: str) -> bool:
+def _evaluate_match(category: str, section: str, line: str) -> tuple[bool, str, bool, str]:
+    """Evaluate whether a changed line matches a category.
+
+    Section hints scope and boost candidate matches but do NOT classify a line
+    by themselves. A category keyword/phrase match in the changed line is strictly required.
+    Returns (matched, matched_phrase, matched_section_hint, match_reason).
+    """
     rule = next(rule for rule in _RULES if rule[0] == category)
-    normalized = f"{section} {line}".casefold()
+    line_lower = line.casefold()
+    section_lower = section.casefold()
     keywords, section_hints = rule[1], rule[2]
-    return any(keyword in normalized for keyword in keywords) or any(hint in section.casefold() for hint in section_hints)
+
+    found_kw = next((kw for kw in keywords if kw in line_lower), "")
+    section_matched = any(hint in section_lower for hint in section_hints)
+
+    # Core guard: never classify solely because of section name.
+    if not found_kw:
+        return False, "", section_matched, ""
+
+    if section_matched:
+        reason = f"phrase '{found_kw}' in relevant section '{section}'"
+    else:
+        reason = f"phrase '{found_kw}'"
+
+    return True, found_kw, section_matched, reason
+
+
+def _matches(category: str, section: str, line: str) -> bool:
+    matched, _, _, _ = _evaluate_match(category, section, line)
+    return matched
 
 
 def classify_filing_changes(before: FilingVersion, after: FilingVersion) -> list[FilingFinding]:
@@ -73,7 +104,8 @@ def classify_filing_changes(before: FilingVersion, after: FilingVersion) -> list
         for category, _, _ in _RULES:
             for change, lines in (("new", added), ("removed", removed)):
                 for line in lines:
-                    if _matches(category, section, line):
+                    matched, phrase, section_hint, reason = _evaluate_match(category, section, line)
+                    if matched:
                         findings.append(FilingFinding(
                             category=category,
                             change=change,
@@ -83,6 +115,10 @@ def classify_filing_changes(before: FilingVersion, after: FilingVersion) -> list
                             after_url=after.source_url,
                             before_filing_date=before.filing_date,
                             after_filing_date=after.filing_date,
+                            matched_phrase=phrase,
+                            matched_section_hint=section_hint,
+                            match_reason=reason,
+                            analyst_status="unreviewed",
                         ))
     # Stable deduplication: repeated identical lines are still one review item per section/category/change.
     unique: dict[tuple[str, str, str, str], FilingFinding] = {}

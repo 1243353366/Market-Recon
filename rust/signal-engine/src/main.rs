@@ -238,4 +238,17 @@ mod tests {
         let ids: Vec<&str> = result[0].signals.iter().map(|s| s.signal_id.as_str()).collect();
         assert_eq!(ids, vec!["start", "end"]);
     }
+
+    #[test]
+    fn parses_shared_signal_contract_fixture() {
+        let fixture_path = "../../contracts/signal_contract.json";
+        let raw = std::fs::read_to_string(fixture_path).expect("read shared signal contract");
+        let sig: Signal = serde_json::from_str(&raw).expect("deserialize signal contract");
+        assert_eq!(sig.signal_id, "sig:sec:aapl:shipping_delay:20260201");
+        assert_eq!(sig.entity_id, "entity:sec:cik:0000320193");
+        assert_eq!(sig.kind, "shipping_delay");
+        assert_eq!(sig.direction, "negative");
+        assert_eq!(sig.metric_value, Some(-14.5));
+        assert_eq!(sig.confidence, Some(0.95));
+    }
 }

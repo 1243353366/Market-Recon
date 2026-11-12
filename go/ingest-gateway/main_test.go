@@ -175,3 +175,27 @@ func TestIngestRejectsNonObjectDataAndMetadata(t *testing.T) {
 		t.Fatalf("expected 400 metadata must be a JSON object, got %d %s", rec2.Code, rec2.Body.String())
 	}
 }
+
+func TestRecordMatchesSharedContractFixture(t *testing.T) {
+	fixturePath := filepath.Join("..", "..", "contracts", "record_contract.json")
+	bytes, err := os.ReadFile(fixturePath)
+	if err != nil {
+		t.Fatalf("failed reading shared contract fixture: %v", err)
+	}
+
+	var rec Record
+	if err := json.Unmarshal(bytes, &rec); err != nil {
+		t.Fatalf("failed unmarshaling shared contract: %v", err)
+	}
+
+	if err := rec.validate(); err != nil {
+		t.Fatalf("shared contract record failed validation: %v", err)
+	}
+
+	if rec.RecordID != "rec:sec:0000320193:20241101" {
+		t.Fatalf("unexpected record_id in contract: %s", rec.RecordID)
+	}
+	if rec.Ticker == nil || *rec.Ticker != "AAPL" {
+		t.Fatalf("expected ticker AAPL, got %v", rec.Ticker)
+	}
+}

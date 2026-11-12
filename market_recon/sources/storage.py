@@ -21,7 +21,7 @@ def write_records(records: Iterable[NormalizedRecord], output: str | Path, forma
             for row in rows:
                 stream.write(json.dumps(asdict(row), ensure_ascii=False, default=str) + "\n")
     elif kind == "csv":
-        fieldnames = ["record_id", "source_id", "collection", "record_type", "source_name", "source_url", "retrieved_at", "observed_at", "published_at", "entity_id", "entity_name", "ticker", "cik", "license_status", "data", "metadata"]
+        fieldnames = ["record_id", "source_id", "collection", "record_type", "source_name", "source_url", "retrieved_at", "observed_at", "published_at", "entity_id", "entity_name", "ticker", "cik", "license_status", "data", "metadata", "run_id"]
         with target.open("w", encoding="utf-8", newline="") as stream:
             writer = csv.DictWriter(stream, fieldnames=fieldnames)
             writer.writeheader()
@@ -49,25 +49,26 @@ def write_records(records: Iterable[NormalizedRecord], output: str | Path, forma
                     cik TEXT,
                     license_status TEXT NOT NULL,
                     data_json TEXT NOT NULL,
-                    metadata_json TEXT NOT NULL
+                    metadata_json TEXT NOT NULL,
+                    run_id TEXT
                 )
             """)
             connection.execute("CREATE INDEX IF NOT EXISTS idx_records_source_collection ON normalized_records(source_id, collection)")
             connection.execute("CREATE INDEX IF NOT EXISTS idx_records_ticker_observed ON normalized_records(ticker, observed_at)")
             connection.executemany("""
-                INSERT INTO normalized_records VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO normalized_records VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(record_id) DO UPDATE SET
                     source_id=excluded.source_id, collection=excluded.collection, record_type=excluded.record_type,
                     source_name=excluded.source_name, source_url=excluded.source_url, retrieved_at=excluded.retrieved_at,
                     observed_at=excluded.observed_at, published_at=excluded.published_at, entity_id=excluded.entity_id,
                     entity_name=excluded.entity_name, ticker=excluded.ticker, cik=excluded.cik,
-                    license_status=excluded.license_status, data_json=excluded.data_json, metadata_json=excluded.metadata_json
+                    license_status=excluded.license_status, data_json=excluded.data_json, metadata_json=excluded.metadata_json, run_id=excluded.run_id
             """, [(
                 row.record_id, row.source_id, row.collection, row.record_type, row.source_name, row.source_url,
                 row.retrieved_at, row.observed_at, row.published_at, row.entity_id, row.entity_name,
                 row.ticker, row.cik, row.license_status,
                 json.dumps(row.data, ensure_ascii=False, default=str),
-                json.dumps(row.metadata, ensure_ascii=False, default=str),
+                json.dumps(row.metadata, ensure_ascii=False, default=str), row.run_id,
             ) for row in rows])
     else:
         raise ValueError("format must be one of: json, csv, sqlite")

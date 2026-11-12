@@ -1,0 +1,86 @@
+{
+  "version": "1.0.0",
+  "description": "Human-labeled public filing excerpts for change-classification precision and recall evaluation, including hard negatives in Item 1, 1A, and 7.",
+  "cases": [
+    {
+      "id": "pos-risk-cyber",
+      "section": "Part I Item 1A",
+      "text": "A sophisticated cybersecurity breach could compromise customer data and adversely affect our operations.",
+      "expected_categories": ["risks"],
+      "is_hard_negative": false,
+      "notes": "Clear risk disclosure with 'could adversely' and 'risk' phrasing"
+    },
+    {
+      "id": "pos-supply-vendor",
+      "section": "Part II Item 7",
+      "text": "We experienced supplier component shortages and logistics delays that constrained hardware manufacturing.",
+      "expected_categories": ["supply_chain_changes"],
+      "is_hard_negative": false,
+      "notes": "Supply chain disruption explicitly referencing supplier, component, logistics, and manufacturing"
+    },
+    {
+      "id": "pos-litigation-subpoena",
+      "section": "Part I Item 3",
+      "text": "In January 2026, the company received a grand jury subpoena regarding a federal regulatory investigation.",
+      "expected_categories": ["litigation_changes"],
+      "is_hard_negative": false,
+      "notes": "Regulatory proceeding and subpoena"
+    },
+    {
+      "id": "pos-exec-cfo",
+      "section": "Part III Item 10",
+      "text": "Our chief financial officer resigned on February 15, and the board appointed Jane Doe as successor CFO.",
+      "expected_categories": ["executive_changes"],
+      "is_hard_negative": false,
+      "notes": "Executive resignation and appointment of successor CFO"
+    },
+    {
+      "id": "pos-comp-equity",
+      "section": "Part III Item 11",
+      "text": "The compensation committee approved an amended incentive plan and annual performance equity award.",
+      "expected_categories": ["compensation_changes"],
+      "is_hard_negative": false,
+      "notes": "Executive compensation incentive plan and equity award"
+    },
+    {
+      "id": "neg-item1-general-business",
+      "section": "Part I Item 1",
+      "text": "We market our cloud infrastructure offerings primarily to commercial enterprise clients across EMEA and APAC.",
+      "expected_categories": [],
+      "is_hard_negative": true,
+      "notes": "Hard negative in Item 1: general sales and marketing description without supply chain terms"
+    },
+    {
+      "id": "neg-item1a-accounting-policy",
+      "section": "Part I Item 1A",
+      "text": "The company adopted ASU 2024-01 regarding lease accounting standards and disclosures across our regional offices.",
+      "expected_categories": [],
+      "is_hard_negative": true,
+      "notes": "Hard negative in Item 1A: routine accounting standard adoption with no risk, supply chain, or litigation terms"
+    },
+    {
+      "id": "neg-item7-revenue-growth",
+      "section": "Part II Item 7",
+      "text": "Total consolidated revenue grew 12.4% year-over-year driven by subscription renewals and software expansion.",
+      "expected_categories": [],
+      "is_hard_negative": true,
+      "notes": "Hard negative in Item 7: MD&A revenue growth commentary without supply chain terms"
+    },
+    {
+      "id": "neg-item8-audit-fees",
+      "section": "Part II Item 8",
+      "text": "Independent registered public accounting fees were approved by the audit committee for the fiscal year.",
+      "expected_categories": [],
+      "is_hard_negative": true,
+      "notes": "Hard negative in Item 8: routine audit fee disclosure, not litigation"
+    },
+    {
+      "id": "neg-item10-committee-charter",
+      "section": "Part III Item 10",
+      "text": "The nominating committee reviewed its written governance charter and meeting schedules during the fourth quarter.",
+      "expected_categories": [],
+      "is_hard_negative": true,
+      "notes": "Hard negative in Item 10: governance scheduling without executive departure or appointment"
+    }
+  ]
+}
