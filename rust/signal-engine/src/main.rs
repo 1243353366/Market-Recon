@@ -39,7 +39,7 @@ struct Finding {
 }
 
 fn find_divergences(signals: Vec<Signal>, as_of: NaiveDate, window_days: i64, min_kinds: usize) -> Result<Vec<Finding>, String> {
-    if window_days < 1 { return Err("window_days must be positive".into()); }
+    if window_days < 1 || window_days > 365_000 { return Err("window_days must be between 1 and 365000".into()); }
     if min_kinds < 2 { return Err("minimum distinct kinds must be at least 2".into()); }
     let start = as_of - Duration::days(window_days);
     let mut groups: BTreeMap<String, Vec<Signal>> = BTreeMap::new();
@@ -52,6 +52,16 @@ fn find_divergences(signals: Vec<Signal>, as_of: NaiveDate, window_days: i64, mi
         }
         if !matches!(signal.direction.as_str(), "positive" | "negative" | "mixed" | "unknown") {
             return Err(format!("signal {} has unsupported direction", signal.signal_id));
+        }
+        if let Some(val) = signal.metric_value {
+            if !val.is_finite() {
+                return Err(format!("signal {} metric_value must be finite", signal.signal_id));
+            }
+        }
+        if let Some(conf) = signal.confidence {
+            if !conf.is_finite() || conf < 0.0 || conf > 1.0 {
+                return Err(format!("signal {} confidence must be between 0.0 and 1.0", signal.signal_id));
+            }
         }
         if signal.observed_on >= start && signal.observed_on <= as_of {
             groups.entry(signal.entity_id.clone()).or_default().push(signal);
@@ -160,8 +170,28 @@ mod tests {
     fn validates_window_days_and_min_kinds() {
         let rows = vec![signal("a", "demand", "positive", "2026-01-01")];
         let as_of = NaiveDate::parse_from_str("2026-02-01", "%Y-%m-%d").unwrap();
-        assert_eq!(find_divergences(rows.clone(), as_of, 0, 2).unwrap_err(), "window_days must be positive");
+        assert_eq!(find_divergences(rows.clone(), as_of, 0, 2).unwrap_err(), "window_days must be between 1 and 365000");
+        assert_eq!(find_divergences(rows.clone(), as_of, 400_000, 2).unwrap_err(), "window_days must be between 1 and 365000");
         assert_eq!(find_divergences(rows, as_of, 30, 1).unwrap_err(), "minimum distinct kinds must be at least 2");
+    }
+
+    #[test]
+    fn rejects_non_finite_metric_value() {
+        let mut s = signal("a", "demand", "positive", "2026-01-01");
+        s.metric_value = Some(f64::NAN);
+        let err = find_divergences(vec![s], NaiveDate::parse_from_str("2026-02-01", "%Y-%m-%d").unwrap(), 60, 2).unwrap_err();
+        assert!(err.contains("metric_value must be finite"));
+    }
+
+    #[test]
+    fn rejects_invalid_confidence() {
+        let mut s = signal("a", "demand", "positive", "2026-01-01");
+        s.confidence = Some(1.5);
+        let err = find_divergences(vec![s.clone()], NaiveDate::parse_from_str("2026-02-01", "%Y-%m-%d").unwrap(), 60, 2).unwrap_err();
+        assert!(err.contains("confidence must be between 0.0 and 1.0"));
+
+        s.confidence = Some(-0.1);
+        assert!(find_divergences(vec![s], NaiveDate::parse_from_str("2026-02-01", "%Y-%m-%d").unwrap(), 60, 2).is_err());
     }
 
     #[test]

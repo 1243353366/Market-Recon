@@ -18,8 +18,8 @@ type RecordItem = {
   metadata: Record<string, unknown>;
 };
 
-function resolveLicenseStatus(record: RecordItem): string {
-  const candidate = record.license_status ?? record.data.license_status ?? record.metadata.license_status ?? 'Review source terms';
+function resolveLicenseStatus(record: Partial<RecordItem>): string {
+  const candidate = record.license_status ?? record.data?.license_status ?? record.metadata?.license_status ?? 'Review source terms';
   return String(candidate);
 }
 
@@ -81,6 +81,21 @@ test('resolveLicenseStatus falls back to data then metadata then default', () =>
     metadata: {},
   };
   assert.equal(resolveLicenseStatus(withNeither), 'Review source terms');
+});
+
+test('resolveLicenseStatus safely handles null or undefined data/metadata payloads', () => {
+  const recordWithNulls = {
+    record_id: 'r3',
+    source_id: 'sec',
+    collection: 'filings',
+    record_type: '10-K',
+    source_name: 'SEC EDGAR',
+    source_url: 'https://www.sec.gov',
+    retrieved_at: '2026-01-01T00:00:00Z',
+    data: null as any,
+    metadata: null as any,
+  };
+  assert.equal(resolveLicenseStatus(recordWithNulls), 'Review source terms');
 });
 
 test('buildSearchParams standardizes ticker uppercase and trims query', () => {

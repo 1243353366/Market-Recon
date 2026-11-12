@@ -44,7 +44,8 @@ def _record(row: sqlite3.Row) -> dict[str, Any]:
     for key in ("data_json", "metadata_json"):
         raw = result.pop(key, None)
         try:
-            result["data" if key == "data_json" else "metadata"] = json.loads(raw) if raw else {}
+            val = json.loads(raw) if raw else {}
+            result["data" if key == "data_json" else "metadata"] = val if isinstance(val, dict) else {}
         except (json.JSONDecodeError, TypeError):
             result["data" if key == "data_json" else "metadata"] = {}
     return result

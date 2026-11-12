@@ -119,3 +119,39 @@ def test_date_range_validation_rejects_inverted_dates() -> None:
     stooq = StooqAdapter()
     with pytest.raises(ValueError, match="start_date must not be after end_date"):
         stooq.fetch(symbol="AAPL", start_date=date(2026, 5, 1), end_date=date(2026, 1, 1))
+
+
+def test_filing_version_store_creates_ticker_index(tmp_path: Path) -> None:
+    db_path = tmp_path / "filings_idx.db"
+    FilingVersionStore(db_path)
+    with sqlite3.connect(db_path) as conn:
+        indices = [row[1] for row in conn.execute("PRAGMA index_list('filing_versions')").fetchall()]
+        assert "idx_filing_versions_lookup" in indices
+        assert "idx_filing_versions_ticker" in indices
+
+
+def test_normalized_record_enforces_dictionary_data_and_metadata() -> None:
+    with pytest.raises(TypeError, match="data must be a dictionary"):
+        NormalizedRecord(
+            record_id="rec:bad_data",
+            source_id="sec",
+            collection="filings",
+            record_type="10-K",
+            source_name="SEC EDGAR",
+            source_url="https://sec.gov",
+            retrieved_at="2026-01-01T00:00:00Z",
+            data="not a dict",  # type: ignore[arg-type]
+        )
+
+    with pytest.raises(TypeError, match="metadata must be a dictionary"):
+        NormalizedRecord(
+            record_id="rec:bad_meta",
+            source_id="sec",
+            collection="filings",
+            record_type="10-K",
+            source_name="SEC EDGAR",
+            source_url="https://sec.gov",
+            retrieved_at="2026-01-01T00:00:00Z",
+            data={},
+            metadata=[1, 2, 3],  # type: ignore[arg-type]
+        )

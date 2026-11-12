@@ -39,6 +39,10 @@ class NormalizedRecord:
             raise ValueError("source_url must be an HTTPS URL")
         if not self.retrieved_at:
             raise ValueError("retrieved_at is required")
+        if not isinstance(self.data, dict):
+            raise TypeError("data must be a dictionary")
+        if not isinstance(self.metadata, dict):
+            raise TypeError("metadata must be a dictionary")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

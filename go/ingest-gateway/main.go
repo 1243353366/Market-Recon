@@ -59,8 +59,18 @@ func (r Record) validate() error {
 	if !json.Valid(r.Data) {
 		return errors.New("data must be valid JSON")
 	}
-	if len(r.Metadata) > 0 && !json.Valid(r.Metadata) {
-		return errors.New("metadata must be valid JSON")
+	trimmedData := strings.TrimSpace(string(r.Data))
+	if !strings.HasPrefix(trimmedData, "{") || !strings.HasSuffix(trimmedData, "}") {
+		return errors.New("data must be a JSON object")
+	}
+	if len(r.Metadata) > 0 {
+		if !json.Valid(r.Metadata) {
+			return errors.New("metadata must be valid JSON")
+		}
+		trimmedMeta := strings.TrimSpace(string(r.Metadata))
+		if !strings.HasPrefix(trimmedMeta, "{") || !strings.HasSuffix(trimmedMeta, "}") {
+			return errors.New("metadata must be a JSON object")
+		}
 	}
 	return nil
 }

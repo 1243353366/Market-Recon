@@ -30,3 +30,7 @@ market-recon-rag = "market_recon.rag.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["market_recon*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

@@ -150,3 +150,28 @@ func TestConcurrentIngestAppendsSafely(t *testing.T) {
 		t.Fatalf("expected %d persisted records, found %d", count, len(lines))
 	}
 }
+
+func TestIngestRejectsNonObjectDataAndMetadata(t *testing.T) {
+	gateway := &Gateway{token: "valid-token-at-least-24-characters-long", path: filepath.Join(t.TempDir(), "records.jsonl")}
+	handler := gateway.authorize(gateway.ingest)
+
+	// String data
+	body1 := `{"record_id":"1","source_id":"s","collection":"c","record_type":"r","source_name":"sn","source_url":"https://example.org","retrieved_at":"2026-01-01T00:00:00Z","license_status":"public_domain","data":"not an object"}`
+	req1 := httptest.NewRequest(http.MethodPost, "/v1/records", strings.NewReader(body1))
+	req1.Header.Set("Authorization", "Bearer valid-token-at-least-24-characters-long")
+	rec1 := httptest.NewRecorder()
+	handler(rec1, req1)
+	if rec1.Code != http.StatusBadRequest || !strings.Contains(rec1.Body.String(), "data must be a JSON object") {
+		t.Fatalf("expected 400 data must be a JSON object, got %d %s", rec1.Code, rec1.Body.String())
+	}
+
+	// Array metadata
+	body2 := `{"record_id":"2","source_id":"s","collection":"c","record_type":"r","source_name":"sn","source_url":"https://example.org","retrieved_at":"2026-01-01T00:00:00Z","license_status":"public_domain","data":{},"metadata":[1,2,3]}`
+	req2 := httptest.NewRequest(http.MethodPost, "/v1/records", strings.NewReader(body2))
+	req2.Header.Set("Authorization", "Bearer valid-token-at-least-24-characters-long")
+	rec2 := httptest.NewRecorder()
+	handler(rec2, req2)
+	if rec2.Code != http.StatusBadRequest || !strings.Contains(rec2.Body.String(), "metadata must be a JSON object") {
+		t.Fatalf("expected 400 metadata must be a JSON object, got %d %s", rec2.Code, rec2.Body.String())
+	}
+}

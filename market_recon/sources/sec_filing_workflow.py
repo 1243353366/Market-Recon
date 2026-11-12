@@ -47,6 +47,7 @@ class FilingVersionStore:
                 )
             """)
             connection.execute("CREATE INDEX IF NOT EXISTS idx_filing_versions_lookup ON filing_versions(cik, form, filing_date DESC)")
+            connection.execute("CREATE INDEX IF NOT EXISTS idx_filing_versions_ticker ON filing_versions(ticker, form, filing_date DESC)")
 
     def save(self, document_id: str, ticker: str, form: str, filing_date: str, cik: str, source_url: str, sections: dict[str, str]) -> None:
         with sqlite3.connect(self.path) as connection:
