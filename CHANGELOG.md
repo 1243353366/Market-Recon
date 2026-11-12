@@ -5,6 +5,7 @@ All notable changes to Market Recon are documented in this file.
 ## [Unreleased]
 
 ### Fixed
+- Portable Node 20/22 test execution: updated `web/package.json` to target `.test-dist/*.test.js` to avoid Node 20 unexpanded double-star glob failures.
 - **Signal Intelligence Robustness & Deduplication**:
   - Fixed `AttributeError` in `PublicSignal.__post_init__` by enforcing strict `isinstance(val, str)` type checks before calling string methods, cleanly raising `ValueError` on malformed inputs.
   - Added `(entity_id, signal_id)` deduplication in `find_cross_signal_divergences` to prevent duplicate evidence from fabricating false mixed-signal clusters.

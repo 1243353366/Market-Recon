@@ -138,3 +138,13 @@ It is repurposed as an **autonomous operational playbook**: before designing or 
 - **Root Cause**: Divergence evaluation only checked for directional opposition and distinct kind count, without auditing source diversity or baseline comparability.
 - **Resolution**: Added `distinct_source_count` and `divergence_caveat` to `SignalDivergence`. Emits explicit caveats when diverging signals originate from a single source or reference heterogeneous baselines.
 - **Repurposed Playbook Rule**: *Multi-signal syntheses must qualify whether directional divergence is corroborated across independent sources and comparable measurement baselines.*
+
+---
+
+### FAIL-012: Node 20 CLI Glob Pattern Misinterpretation
+- **Date**: 2026-11-12
+- **Trigger**: Running `npm test` under Node 20.x in CI with glob argument `.test-dist/**/*.test.js`
+- **Observed Symptom**: Crashed with `Could not find '/home/runner/work/Market-Recon/Market-Recon/web/.test-dist/**/*.test.js'` (exit code 1).
+- **Root Cause**: Node 22 added internal recursive globbing for CLI arguments, whereas Node 20 passes unexpanded glob strings directly to file lookup when POSIX `sh` does not expand `**`. Because `rootDir` was `./src`, compiled test output resided at `.test-dist/*.test.js`.
+- **Resolution**: Updated `npm test` to `.test-dist/*.test.js`, which is portably expanded by standard POSIX shells across Node 18, 20, 22, and 24.
+- **Repurposed Playbook Rule**: *In multi-version Node CI matrixes, avoid relying on Node-version-specific CLI globbing; use standard POSIX single-level wildcards or explicit entrypoints.*
